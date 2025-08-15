@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+option java_package = "com.wceng.app.aiassistant.data.source.datastore";
+option java_multiple_files = true;
+
+message AiProvider {
+    string name = 1;
+    string api_key = 2;
+    string base_url = 3;
+    repeated string models = 4;
+    string selected_model = 5;
+}
