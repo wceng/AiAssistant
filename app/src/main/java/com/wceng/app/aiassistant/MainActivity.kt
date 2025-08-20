@@ -1,6 +1,7 @@
 package com.wceng.app.aiassistant
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -12,6 +13,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.wceng.app.aiassistant.ui.theme.AiAssistantTheme
+import com.wceng.app.aiassistant.util.currentAppLocale
 import com.wceng.app.aiassistant.util.isSystemInDarkTheme
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -27,11 +29,11 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-//        lifecycleScope.launch {
-//            currentAppLocale().collect {
-//                Log.d("MainActivity", "onCreate: ${it.language}")
-//            }
-//        }
+        lifecycleScope.launch {
+            currentAppLocale().collect {
+                Log.d("MainActivity", "onCreate: ${it.language}")
+            }
+        }
 
         var themeInfos by mutableStateOf(
             ThemeSettings(

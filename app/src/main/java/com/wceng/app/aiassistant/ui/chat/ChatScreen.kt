@@ -1,6 +1,7 @@
 package com.wceng.app.aiassistant.ui.chat
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
@@ -15,7 +16,7 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
@@ -27,17 +28,22 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wceng.app.aiassistant.R
@@ -48,14 +54,12 @@ import com.wceng.app.aiassistant.ui.theme.AiaSafeDp
 import com.wceng.app.aiassistant.util.LoadingContent
 import com.wceng.app.aiassistant.util.MarkDownActions
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun ChatScreen(
     sessionId: Long?,
-    modifier: Modifier = Modifier,
     showBackButton: Boolean = false,
     onBack: () -> Unit = {},
     viewModel: ChatViewModel = koinViewModel<ChatViewModel>(),
@@ -80,7 +84,6 @@ fun ChatScreen(
     }
 
     ChatContent(
-        modifier = modifier,
         showBackButton = showBackButton,
         messagesUiState = messagesUiState,
         chatUiState = chatUiState,
@@ -100,7 +103,10 @@ fun ChatScreen(
             },
             onRetryResponseAiMessage = viewModel::retryResponseAssistantMessage,
             onToggleMessage = viewModel::toggleMessage,
-            onCancelReceiveMessage = viewModel::cancelReceiveMessage
+            onCancelReceiveMessage = viewModel::cancelReceiveMessage,
+            onNewChat = {
+
+            }
         ),
         onBack = onBack
     )
@@ -115,12 +121,12 @@ data class MessageActions(
     val onRetryResponseAiMessage: (aiMessageId: Long) -> Unit,
     val onDeleteMessage: (id: String) -> Unit,
     val onToggleMessage: (targetMessageId: Long) -> Unit,
-    val onCancelReceiveMessage: () -> Unit
+    val onCancelReceiveMessage: () -> Unit,
+    val onNewChat: () -> Unit
 )
 
 @Composable
 fun ChatContent(
-    modifier: Modifier = Modifier,
     showBackButton: Boolean,
     messagesUiState: MessagesUiState,
     chatUiState: ChatUiState,
@@ -132,15 +138,12 @@ fun ChatContent(
     coroutineScope: CoroutineScope = rememberCoroutineScope()
 ) {
 
+    var needInputFocus by rememberSaveable { mutableStateOf(false) }
+
     fun scrollToBottom() {
         coroutineScope.launch {
-            delay(200)
             lazyListState.scrollToRealBottom(false)
         }
-    }
-
-    LaunchedEffect(Unit) {
-        scrollToBottom()
     }
 
     Scaffold(
@@ -149,7 +152,8 @@ fun ChatContent(
                 title = chatUiState.sessionTitle,
                 onClearAll = messageActions.onClearAllMessages,
                 showBackButton = showBackButton,
-                onBack = onBack
+                onBack = onBack,
+                onNewChat = messageActions.onNewChat
             )
         },
         snackbarHost = {
@@ -167,47 +171,58 @@ fun ChatContent(
                 onSend = {
                     messageActions.onSendMessage(it, chatUiState.prompt)
                     scrollToBottom()
+                    needInputFocus = false
                 },
                 onStop = messageActions.onCancelReceiveMessage,
                 isLoading = chatUiState.isReceiving,
+                requestFocus = needInputFocus,
+                onFocusChanged = {
+                    needInputFocus = it
+                },
                 modifier = Modifier
                     .padding(horizontal = AiaSafeDp.safeHorizontal)
-                    .imePadding()
+//                    .imePadding()
             )
         }
     ) { paddingValues ->
-        Column(
-            modifier = modifier.padding(paddingValues)
+        Box(
+            modifier = Modifier.padding(paddingValues),
         ) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = AiaSafeDp.safeHorizontal),
-            ) {
-                when (messagesUiState) {
-                    is MessagesUiState.Error, MessagesUiState.Idle -> Unit
-                    is MessagesUiState.Loading -> LoadingContent()
-                    is MessagesUiState.Success -> {
-                        LazyColumn(
-                            reverseLayout = false,
-                            verticalArrangement = Arrangement.spacedBy(24.dp),
-                            state = lazyListState,
-                            userScrollEnabled = true,
-                            contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
-                        ) {
-                            chatUiState.prompt?.let(::prompt)
+            when (messagesUiState) {
+                is MessagesUiState.Error, MessagesUiState.Idle -> Unit
+                is MessagesUiState.Loading -> LoadingContent()
+                is MessagesUiState.Success -> {
+                    LazyColumn(
+                        reverseLayout = false,
+                        verticalArrangement = Arrangement.spacedBy(24.dp),
+                        state = lazyListState,
+                        userScrollEnabled = true,
+                        contentPadding = PaddingValues(horizontal = AiaSafeDp.safeHorizontal),
+                    ) {
+                        chatUiState.prompt?.let(::prompt)
 
-                            messageList(
-                                bubbleToMessages = messagesUiState.bubbleToMessages,
-                                markDownActions = markDownActions,
-                                messageActions = messageActions,
-                            )
+                        messageList(
+                            bubbleToMessages = messagesUiState.bubbleToMessages,
+                            markDownActions = markDownActions,
+                            messageActions = messageActions,
+                        )
 
-                        }
                     }
-
                 }
+
             }
+        }
+    }
+
+    if (messagesUiState is MessagesUiState.Success) {
+        LaunchedEffect(Unit) {
+            scrollToBottom()
+        }
+    }
+
+    LaunchedEffect(lazyListState.isScrollInProgress) {
+        if (lazyListState.isScrollInProgress) {
+            needInputFocus = false
         }
     }
 }
@@ -219,10 +234,18 @@ private fun ChatTopAppBar(
     title: String,
     showBackButton: Boolean,
     onClearAll: () -> Unit = {},
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    onNewChat: () -> Unit = {}
 ) {
-    CenterAlignedTopAppBar(
-        title = { Text(text = title) },
+    TopAppBar(
+        title = {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 1
+            )
+        },
         modifier = modifier.fillMaxWidth(),
         navigationIcon = {
             if (showBackButton)
@@ -237,24 +260,48 @@ private fun ChatTopAppBar(
         actions = {
             IconButton(onClick = onClearAll) {
                 Icon(
-                    imageVector = AiaImages.ClearAll,
+                    imageVector = AiaImages.DeleteSweep,
                     contentDescription = stringResource(id = R.string.clear_all)
                 )
             }
+            IconButton(onClick = onNewChat) {
+                Icon(
+                    imageVector = AiaImages.AddComment,
+                    contentDescription = stringResource(id = R.string.new_chat)
+                )
+            }
+
         }
     )
 }
 
 private fun LazyListScope.prompt(prompt: String) {
     item {
+        var expended by rememberSaveable { mutableStateOf(false) }
+
         Box(
             modifier = Modifier.fillMaxWidth(),
             contentAlignment = Alignment.Center
         ) {
             Surface(
-                modifier = Modifier.clip(MaterialTheme.shapes.medium)
+                modifier = Modifier
+                    .clip(MaterialTheme.shapes.small)
+                    .animateContentSize()
+                    .clickable {
+                        expended = expended.not()
+                    },
             ) {
-                Text(text = prompt)
+                if (expended) {
+                    Text(
+                        text = prompt,
+                    )
+                } else {
+                    Text(
+                        text = prompt,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
         }
     }

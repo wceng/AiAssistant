@@ -61,6 +61,7 @@
     <string name="dark_mode_system">系统默认</string>
     <string name="dark_mode_light">浅色</string>
     <string name="dark_mode_dark">深色</string>
-
-
+    <string name="add">添加</string>
+    <string name="confirm_delete_title">确认删除？</string>
+    <string name="delete_service_provider_message">确定要删除 %s 吗？此操作无法撤销。</string>
 </resources>

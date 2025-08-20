@@ -16,10 +16,12 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.wceng.app.aiassistant.R
@@ -191,15 +194,23 @@ fun SettingItemPanel(
         Text(
             text = title,
             style = MaterialTheme.typography.titleSmall,
-            modifier = Modifier.alpha(0.7f)
+            modifier = Modifier
+                .alpha(0.5f)
+                .padding(horizontal = 16.dp)
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(4.dp))
         Column(
             modifier = Modifier
                 .clip(MaterialTheme.shapes.medium)
                 .background(MaterialTheme.colorScheme.surfaceContainerLow)
         ) {
-            content()
+            CompositionLocalProvider(
+                LocalTextStyle provides TextStyle(
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            ) {
+                content()
+            }
         }
     }
 }

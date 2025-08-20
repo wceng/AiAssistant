@@ -64,7 +64,6 @@ internal fun UserMessageBubble(
                     )
                 }
             }
-            Spacer(Modifier.height(4.dp))
 
             MessageUserOperateBar(
                 bubbleToMsg = bubbleToMsg,
@@ -123,8 +122,6 @@ internal fun AssistantMessageBubble(
                     }
                 }
             }
-
-            Spacer(Modifier.height(4.dp))
 
             MessageAssistantOperateBar(
                 modifier = Modifier.align(Alignment.Start),

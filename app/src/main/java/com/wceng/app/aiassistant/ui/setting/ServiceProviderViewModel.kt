@@ -124,7 +124,8 @@ class ServiceProviderViewModel(
 
     fun addModel(model: String) {
         viewModelScope.launch {
-            userSettingsRepository.addSelectedAiProviderModel(model)
+            if (userSettingsRepository.existSelectedAiProviderModel(model).not())
+                userSettingsRepository.addSelectedAiProviderModel(model)
         }
     }
 
@@ -136,8 +137,10 @@ class ServiceProviderViewModel(
 
     fun addCustomServiceProvider(name: String) {
         viewModelScope.launch {
-            userSettingsRepository.addAiProviderInfo(name)
-            userSettingsRepository.setSelectedAiProvider(name)
+            if (userSettingsRepository.existServiceProviderName(name).not()) {
+                userSettingsRepository.addAiProviderInfo(name)
+                userSettingsRepository.setSelectedAiProvider(name)
+            }
         }
     }
 
@@ -148,6 +151,12 @@ class ServiceProviderViewModel(
                 userSettingsRepository.setSelectedAiProviderBaseUrl(it.baseUrl)
             } ?: return@launch
 
+        }
+    }
+
+    fun deleteServiceProvider(providerName: String) {
+        viewModelScope.launch {
+            userSettingsRepository.deleteServiceProvider(providerName)
         }
     }
 }

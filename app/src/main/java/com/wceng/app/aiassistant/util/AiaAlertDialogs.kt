@@ -85,9 +85,32 @@ fun AiaTextFieldAlertDialog(
 
 @Composable
 fun AiaAlertDialog(
-    modifier: Modifier = Modifier,
     onDismissRequest: () -> Unit,
     confirmButton: @Composable () -> Unit,
+    @StringRes titleRes: Int,
+    modifier: Modifier = Modifier,
+    dismissButton: @Composable (() -> Unit)? = null,
+    textStr: String? = null,
+) {
+    AiaAlertDialog(
+        onDismissRequest = onDismissRequest,
+        confirmButton = confirmButton,
+        titleRes = titleRes,
+        modifier = modifier,
+        dismissButton = dismissButton,
+        text = textStr?.let {
+            {
+                Text(text = it)
+            }
+        }
+    )
+}
+
+@Composable
+fun AiaAlertDialog(
+    onDismissRequest: () -> Unit,
+    confirmButton: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
     dismissButton: @Composable (() -> Unit)? = null,
     icon: ImageVector? = null,
     iconContentDescription: String? = null,

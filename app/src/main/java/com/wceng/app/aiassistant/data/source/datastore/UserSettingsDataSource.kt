@@ -89,6 +89,19 @@ class UserSettingsDataSource(
         }
     }
 
+    suspend fun removeAiProvider(providerName: String) {
+        datastore.updateData { userPreferences ->
+            val build = userPreferences.toBuilder()
+            build.removeAiProviders(providerName)
+
+            if (providerName == userPreferences.selectedAiProviderName) {
+                build.setSelectedAiProviderName("")
+            }
+
+            build.build()
+        }
+    }
+
     suspend fun setSelectedAiProviderApiKey(apiKey: String) {
         datastore.updateData { userPreferences ->
             val updatedAiProvider = useSetting.first()

@@ -90,7 +90,7 @@ private fun LanguageBottomSheetContent(
     }
 }
 
-private fun getCurrentLanguage(): String {
+private fun getCurrentLanguage(): String? {
     val locales = AppCompatDelegate.getApplicationLocales()
     val primaryLocale = locales[0] // 获取第一个（主要）语言区域
 
@@ -98,5 +98,5 @@ private fun getCurrentLanguage(): String {
         return primaryLocale.language // "en", "zh", "es" 等
     }
 
-    return "en"
+    return null
 }

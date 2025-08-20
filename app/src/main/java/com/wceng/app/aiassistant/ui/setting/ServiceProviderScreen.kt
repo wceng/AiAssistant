@@ -61,6 +61,7 @@ import com.wceng.app.aiassistant.domain.model.DEFAULT_AI_PROVIDER_CONFIG_INFO
 import com.wceng.app.aiassistant.ui.theme.AiAssistantTheme
 import com.wceng.app.aiassistant.ui.theme.AiaImages
 import com.wceng.app.aiassistant.ui.theme.AiaSafeDp
+import com.wceng.app.aiassistant.util.AiaAlertDialog
 import com.wceng.app.aiassistant.util.AiaAssistChip
 import com.wceng.app.aiassistant.util.AiaCircularProgressIndicator
 import com.wceng.app.aiassistant.util.AiaTextFieldAlertDialog
@@ -88,7 +89,8 @@ fun ServiceProviderScreen(
             onAddModel = viewModel::addModel,
             onDeleteModel = viewModel::deleteModel,
             onAddCustomServiceProvider = viewModel::addCustomServiceProvider,
-            onResetHostUrl = viewModel::resetHostUrl
+            onResetHostUrl = viewModel::resetHostUrl,
+            onDeleteServiceProvider = viewModel::deleteServiceProvider
         ),
     )
 }
@@ -104,7 +106,8 @@ data class ServiceProviderActions(
     val onAddModel: (String) -> Unit,
     val onDeleteModel: (String) -> Unit,
     val onAddCustomServiceProvider: (String) -> Unit,
-    val onResetHostUrl: (String) -> Unit
+    val onResetHostUrl: (String) -> Unit,
+    val onDeleteServiceProvider: (String) -> Unit
 )
 
 @Composable
@@ -116,11 +119,20 @@ private fun ServiceProviderContent(
 ) {
     var showProviderSheet by remember { mutableStateOf(false) }
     var showCustomServiceProvideDialog by remember { mutableStateOf(false) }
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier,
         topBar = {
-            ServerProviderTopbar(onBack = onBack)
+            ServerProviderTopbar(
+                onBack = onBack,
+                onDelete = {
+                    showDeleteConfirmDialog = true
+                },
+                onAdd = {
+                    showCustomServiceProvideDialog = true
+                }
+            )
         },
         floatingActionButton = {
             if (uiState is ServiceProviderUiState.Success && uiState.isConfigChanged) {
@@ -220,9 +232,6 @@ private fun ServiceProviderContent(
                     providers = uiState.aiProviderConfigInfo.aiProviderInfos,
                     currentProvider = uiState.aiProviderConfigInfo.selectedAiProviderName,
                     onProviderSelected = serviceProviderActions.onSetSelectedProvider,
-                    onCustomServiceProvider = {
-                        showCustomServiceProvideDialog = true
-                    }
                 )
             }
         }
@@ -238,6 +247,31 @@ private fun ServiceProviderContent(
             requestFocus = true,
             singleLine = true,
         )
+
+    if (showDeleteConfirmDialog)
+        if (uiState is ServiceProviderUiState.Success) {
+            val name = uiState.aiProviderConfigInfo.selectedAiProviderName
+            AiaAlertDialog(
+                onDismissRequest = { showDeleteConfirmDialog = false },
+                titleRes = R.string.confirm_delete_title,
+                confirmButton = {
+                    TextButton(onClick = {
+                        serviceProviderActions.onDeleteServiceProvider(name)
+                        showDeleteConfirmDialog = false
+                    }) {
+                        Text(stringResource(R.string.confirm))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteConfirmDialog = false }) {
+                        Text(text = stringResource(R.string.cancel))
+                    }
+                },
+                textStr = stringResource(
+                    R.string.delete_service_provider_message, name
+                ),
+            )
+        }
 }
 
 @Composable
@@ -373,7 +407,6 @@ private fun AiProviderBottomSheet(
     providers: List<AiProviderInfo>,
     currentProvider: String,
     onProviderSelected: (String) -> Unit,
-    onCustomServiceProvider: () -> Unit
 ) {
     if (show) {
         ModalBottomSheet(
@@ -399,19 +432,6 @@ private fun AiProviderBottomSheet(
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                     )
                 }
-                item {
-                    ListItem(
-                        modifier = Modifier.clickable {
-                            onCustomServiceProvider()
-                            onDismissRequest()
-                        },
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                        leadingContent = {
-                            Icon(imageVector = AiaImages.Add, contentDescription = null)
-                        },
-                        headlineContent = { Text(stringResource(R.string.custom_service_provider)) },
-                    )
-                }
             }
         }
     }
@@ -419,13 +439,27 @@ private fun AiProviderBottomSheet(
 
 @Composable
 private fun ServerProviderTopbar(
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onDelete: () -> Unit,
+    onAdd: () -> Unit
 ) {
     TopAppBar(
         title = {},
         navigationIcon = {
             IconButton(onClick = onBack) {
                 Icon(AiaImages.ArrowBack, contentDescription = stringResource(R.string.back))
+            }
+        },
+        actions = {
+            IconButton(onClick = onDelete) {
+                Icon(
+                    imageVector = AiaImages.Delete,
+                    contentDescription = stringResource(R.string.delete)
+                )
+            }
+
+            IconButton(onClick = onAdd) {
+                Icon(imageVector = AiaImages.Add, contentDescription = stringResource(R.string.add))
             }
         })
 }
@@ -469,7 +503,8 @@ private fun ServiceProviderContentPreview() {
                     onAddModel = { },
                     onDeleteModel = { },
                     onAddCustomServiceProvider = { },
-                    onResetHostUrl = { }
+                    onResetHostUrl = { },
+                    onDeleteServiceProvider = { }
                 ),
                 onBack = {},
             )

@@ -6,11 +6,17 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -21,21 +27,23 @@ import com.wceng.app.aiassistant.util.AiaTextFiled
 
 @Composable
 fun MessageInput(
-    modifier: Modifier = Modifier,
+    isLoading: Boolean,
     onSend: (String) -> Unit,
-    onStop: () -> Unit = {},
-    isLoading: Boolean
+    onStop: () -> Unit,
+    modifier: Modifier = Modifier,
+    requestFocus: Boolean = false,
+    onFocusChanged: (Boolean) -> Unit = {}
 ) {
     var text by rememberSaveable { mutableStateOf("") }
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
 
+    val focusRequester = remember { FocusRequester() }
+
     fun onSendMessage() {
         if (text.isNotBlank() && !isLoading) {
             onSend(text)
             text = ""
-            keyboardController?.hide()
-            focusManager.clearFocus()
         }
     }
 
@@ -66,8 +74,25 @@ fun MessageInput(
         },
         singleLine = false,
         maxLines = 5,
-        modifier = modifier.fillMaxWidth()
-    )
+        modifier = modifier
+            .fillMaxWidth()
+            .focusRequester(focusRequester)
+            .onFocusChanged { focusState ->
+                val isFocused = focusState.isFocused
+                onFocusChanged(isFocused)
+
+            },
+        )
+
+    LaunchedEffect(requestFocus) {
+        if (requestFocus) {
+            focusRequester.requestFocus()
+            keyboardController?.show()
+        } else {
+            keyboardController?.hide()
+            focusManager.clearFocus()
+        }
+    }
 }
 
 @Preview
@@ -77,6 +102,7 @@ private fun MessageInputIdle() {
         MessageInput(
             onSend = {},
             isLoading = false,
+            onStop = { },
         )
     }
 }
@@ -88,6 +114,7 @@ private fun MessageInputLoading() {
         MessageInput(
             onSend = {},
             isLoading = true,
+            onStop = { },
         )
     }
 }
