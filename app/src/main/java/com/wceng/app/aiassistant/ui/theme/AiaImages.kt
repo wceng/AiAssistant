@@ -7,7 +7,11 @@ import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.outlined.AddComment
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.AddComment
 import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.AttachFile
 import androidx.compose.material.icons.rounded.AutoAwesome
@@ -19,6 +23,7 @@ import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Feedback
@@ -41,7 +46,9 @@ import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
 
 object AiaImages {
-    val Delete = Icons.Rounded.Delete
+    val AddComment = Icons.Outlined.AddComment
+    val DeleteSweep = Icons.Outlined.DeleteSweep
+    val Delete = Icons.Outlined.Delete
     val AutoAwesome = Icons.Rounded.AutoAwesome
     val Key = Icons.Rounded.Key
     val Link = Icons.Rounded.Link

@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import com.wceng.app.aiassistant.AiaAppState
+import com.wceng.app.aiassistant.ui.Conversation2Panel
 import com.wceng.app.aiassistant.ui.prompt.PromptScreen
 import com.wceng.app.aiassistant.ui.setting.LicenseScreen
 import com.wceng.app.aiassistant.ui.setting.ServiceProviderScreen
@@ -47,7 +48,7 @@ fun AiaNav(
         startDestination = ConversationsRoute::class
     ) {
         composable<ConversationsRoute> {
-            ConversationWithChatPanel(
+            Conversation2Panel(
                 onHideTopBarAndBottomNavBar = onHideTopBarAndBottomNavBar
             )
         }

@@ -26,6 +26,9 @@ interface ChatDao {
     @Query("delete from conversation where id = :conversationId")
     suspend fun deleteConversation(conversationId: Long)
 
+    @Query("delete from conversation where id in (:conversationIds)")
+    suspend fun deleteConversations(conversationIds: Set<Long>)
+
     @Query("select * from conversation where id = :conversationId")
     fun getConversationFlowById(conversationId: Long): Flow<ConversationEntity?>
 

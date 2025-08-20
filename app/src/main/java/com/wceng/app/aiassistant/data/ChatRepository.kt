@@ -30,6 +30,7 @@ interface ChatRepository {
     fun isMessageActiveInConversation(convId: Long): Flow<Boolean>
     suspend fun createNewConversation(title: String, promptId: Long? = null): Long
     suspend fun deleteConversation(id: Long)
+    suspend fun deleteConversations(ids: Set<Long>)
     suspend fun getConversation(id: Long): Conversation?
     suspend fun updateConversationTitle(id: Long, newTitle: String)
     suspend fun sendMessage(convId: Long, content: String, prompt: String? = null)
@@ -159,6 +160,10 @@ class DefaultChatRepository(
 
     override suspend fun deleteConversation(id: Long) {
         chatDao.deleteConversation(id)
+    }
+
+    override suspend fun deleteConversations(ids: Set<Long>) {
+        chatDao.deleteConversations(ids)
     }
 
     override suspend fun getConversation(id: Long): Conversation? =

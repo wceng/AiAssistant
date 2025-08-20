@@ -3,29 +3,29 @@ package com.wceng.app.aiassistant.ui.setting
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import com.wceng.app.aiassistant.R
-import com.wceng.app.aiassistant.ui.theme.AiaImages
+import com.wceng.app.aiassistant.component.AiaLargeTopBar
+import com.wceng.app.aiassistant.component.BackButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LicenseScreen(
     onNavigationClick: () -> Unit
 ) {
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
-        modifier = Modifier,
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            LicenseTopAppBar(onNavigationClick)
-        }
+            LicenseTopAppBar(onNavigationClick, scrollBehavior)
+        },
     ) { innerPadding ->
         Column(
             modifier = Modifier.padding(innerPadding)
@@ -40,22 +40,13 @@ fun LicenseScreen(
 @Composable
 private fun LicenseTopAppBar(
     onNavigationClick: () -> Unit,
+    scrollBehavior: TopAppBarScrollBehavior,
 ) {
-    CenterAlignedTopAppBar(
-        title = {
-            Text(
-                text = stringResource(R.string.license),
-            )
-        },
+    AiaLargeTopBar(
+        titleRes = R.string.license,
         navigationIcon = {
-            IconButton(
-                onClick = onNavigationClick
-            ) {
-                Icon(
-                    imageVector = AiaImages.ArrowBack,
-                    contentDescription = stringResource(R.string.back)
-                )
-            }
+            BackButton(onNavigationClick)
         },
+        scrollBehavior = scrollBehavior
     )
 }

@@ -1,4 +1,4 @@
-package com.wceng.app.aiassistant.util
+package com.wceng.app.aiassistant.component
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.size

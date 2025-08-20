@@ -21,7 +21,6 @@ import com.wceng.app.aiassistant.data.source.remote.OpenAIChatApi
 import com.wceng.app.aiassistant.data.source.remote.PromptApi
 import com.wceng.app.aiassistant.domain.usecase.CreateConversationWithPromptUseCase
 import com.wceng.app.aiassistant.domain.usecase.GetGroupedConversationsUseCase
-import com.wceng.app.aiassistant.navigation.ConversationWithChatViewModel
 import com.wceng.app.aiassistant.ui.chat.ChatViewModel
 import com.wceng.app.aiassistant.ui.prompt.PromptViewModel
 import com.wceng.app.aiassistant.ui.session.SessionViewModel
@@ -98,7 +97,6 @@ val viewModelModule = module {
     viewModelOf(::SessionViewModel)
     viewModelOf(::SettingViewModel)
     viewModelOf(::PromptViewModel)
-    viewModelOf(::ConversationWithChatViewModel)
     viewModelOf(::ServiceProviderViewModel)
     viewModelOf(::ColorSchemeViewModel)
     viewModelOf(::MainViewModel)

@@ -19,8 +19,6 @@ kotlinx-datetime = "0.4.1"
 openai-client = "4.0.1"
 datastore = "1.1.7"
 markdown-renderer = "0.35.0"
-window = "1.4.0-rc02"
-material3-adaptive = "1.1.0"
 protobufPlugin = "0.9.4"
 protobuf = "4.29.2"
 autoLicense = "11.2.2"
@@ -45,11 +43,11 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3" 
 androidx-material3-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "icons-extended" }
 
 # Adaptive
-androidx-window = { group = "androidx.window", name = "window", version.ref = "window" }
-androidx-compose-material3-adaptive = { group = "androidx.compose.material3.adaptive", name = "adaptive", version.ref = "material3-adaptive" }
-androidx-compose-material3-adaptive-layout = { group = "androidx.compose.material3.adaptive", name = "adaptive-layout", version.ref = "material3-adaptive" }
-androidx-compose-material3-adaptive-navigation = { group = "androidx.compose.material3.adaptive", name = "adaptive-navigation", version.ref = "material3-adaptive" }
-androidx-compose-material3-adaptive-navigation-suite = { group = "androidx.compose.material3", name = "material3-adaptive-navigation-suite", version.ref = "androidx-material3" }
+androidx-compose-material3-window-size = { group = "androidx.compose.material3", name = "material3-window-size-class"}
+androidx-compose-material3-adaptive = { group = "androidx.compose.material3.adaptive", name = "adaptive"}
+androidx-compose-material3-adaptive-layout = { group = "androidx.compose.material3.adaptive", name = "adaptive-layout"}
+androidx-compose-material3-adaptive-navigation = { group = "androidx.compose.material3.adaptive", name = "adaptive-navigation"}
+androidx-compose-material3-adaptive-navigation-suite = { group = "androidx.compose.material3", name = "material3-adaptive-navigation-suite" }
 
 # Navigation
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "androidx-navigation" }

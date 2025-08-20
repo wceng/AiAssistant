@@ -28,7 +28,7 @@ import com.wceng.app.aiassistant.R
 import com.wceng.app.aiassistant.domain.model.DarkModeInfo
 import com.wceng.app.aiassistant.domain.model.ThemeSchemeInfo
 import com.wceng.app.aiassistant.ui.theme.AiaSafeDp
-import com.wceng.app.aiassistant.util.LoadingContent
+import com.wceng.app.aiassistant.component.LoadingContent
 import org.koin.compose.koinInject
 
 @Composable

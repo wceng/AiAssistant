@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.wceng.app.aiassistant.ui.setting
 
 import androidx.compose.foundation.background
@@ -13,13 +15,18 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,11 +36,15 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.wceng.app.aiassistant.R
+import com.wceng.app.aiassistant.component.AiaLargeTopBar
+import com.wceng.app.aiassistant.ui.DevicePreview
 import com.wceng.app.aiassistant.ui.theme.AiaImages
 import com.wceng.app.aiassistant.ui.theme.AiaSafeDp
 import com.wceng.app.aiassistant.util.Constant
@@ -108,75 +119,88 @@ private fun SettingContent(
     modifier: Modifier = Modifier,
     settingActions: SettingActions
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = AiaSafeDp.safeHorizontal),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
-    ) {
-        SettingItemPanel(
-            title = stringResource(R.string.service_provider),
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
+    Scaffold(
+        topBar = {
+            AiaLargeTopBar(
+                titleRes = R.string.setting_title,
+                scrollBehavior = scrollBehavior
+            )
+        },
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+    ) { paddingValues ->
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(paddingValues)
+                .padding(horizontal = AiaSafeDp.safeHorizontal),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
-            SettingItem(
+            SettingItemPanel(
                 title = stringResource(R.string.service_provider),
-                onClick = settingActions.onClickServiceProvider,
-                leadingIcon = AiaImages.Cloud
-            )
-        }
+            ) {
+                SettingItem(
+                    title = stringResource(R.string.service_provider),
+                    onClick = settingActions.onClickServiceProvider,
+                    leadingIcon = AiaImages.Cloud
+                )
+            }
 
-        SettingItemPanel(
-            title = stringResource(R.string.setting_conversation_section),
-        ) {
-            SettingItem(
+            SettingItemPanel(
                 title = stringResource(R.string.setting_conversation_section),
-                onClick = settingActions.onClickConversationSetting,
-                leadingIcon = AiaImages.Forum
-            )
-        }
+            ) {
+                SettingItem(
+                    title = stringResource(R.string.setting_conversation_section),
+                    onClick = settingActions.onClickConversationSetting,
+                    leadingIcon = AiaImages.Forum
+                )
+            }
 
-        SettingItemPanel(
-            title = stringResource(R.string.setting_display_section),
-        ) {
-            SettingItem(
-                title = stringResource(R.string.setting_language),
-                onClick = settingActions.onClickLanguage,
-                leadingIcon = AiaImages.Language
-            )
+            SettingItemPanel(
+                title = stringResource(R.string.setting_display_section),
+            ) {
+                SettingItem(
+                    title = stringResource(R.string.setting_language),
+                    onClick = settingActions.onClickLanguage,
+                    leadingIcon = AiaImages.Language
+                )
 
-            SettingItem(
-                title = stringResource(R.string.setting_appearance),
-                onClick = settingActions.onClickAppearance,
-                leadingIcon = AiaImages.Palette
-            )
-        }
+                SettingItem(
+                    title = stringResource(R.string.setting_appearance),
+                    onClick = settingActions.onClickAppearance,
+                    leadingIcon = AiaImages.Palette
+                )
+            }
 
-        SettingItemPanel(
-            title = stringResource(R.string.setting_about_section),
-        ) {
-            SettingItem(
-                title = stringResource(R.string.setting_version),
-                onClick = settingActions.onClickVersion,
-                leadingIcon = AiaImages.Info
-            )
+            SettingItemPanel(
+                title = stringResource(R.string.setting_about_section),
+            ) {
+                SettingItem(
+                    title = stringResource(R.string.setting_version),
+                    onClick = settingActions.onClickVersion,
+                    leadingIcon = AiaImages.Info
+                )
 
-            SettingItem(
-                title = stringResource(R.string.setting_license),
-                onClick = settingActions.onClickLicense,
-                leadingIcon = AiaImages.Description
-            )
+                SettingItem(
+                    title = stringResource(R.string.setting_license),
+                    onClick = settingActions.onClickLicense,
+                    leadingIcon = AiaImages.Description
+                )
 
-            SettingItem(
-                title = stringResource(R.string.setting_github),
-                onClick = settingActions.onClickGithub,
-                leadingIcon = AiaImages.Code
-            )
+                SettingItem(
+                    title = stringResource(R.string.setting_github),
+                    onClick = settingActions.onClickGithub,
+                    leadingIcon = AiaImages.Code
+                )
 
-            SettingItem(
-                title = stringResource(R.string.setting_feedback),
-                onClick = settingActions.onClickFeedback,
-                leadingIcon = AiaImages.Feedback
-            )
+                SettingItem(
+                    title = stringResource(R.string.setting_feedback),
+                    onClick = settingActions.onClickFeedback,
+                    leadingIcon = AiaImages.Feedback
+                )
+            }
         }
     }
 }
@@ -190,16 +214,24 @@ fun SettingItemPanel(
     Column(modifier = modifier) {
         Text(
             text = title,
-            style = MaterialTheme.typography.titleSmall,
-            modifier = Modifier.alpha(0.7f)
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(4.dp))
         Column(
             modifier = Modifier
                 .clip(MaterialTheme.shapes.medium)
                 .background(MaterialTheme.colorScheme.surfaceContainerLow)
         ) {
-            content()
+            CompositionLocalProvider(
+                LocalTextStyle provides TextStyle(
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            ) {
+                content()
+            }
         }
     }
 }
@@ -255,7 +287,7 @@ private fun SettingItemPreview() {
 }
 
 
-@Preview()
+@DevicePreview
 @Composable
 private fun SettingContentPreview() {
     Surface {

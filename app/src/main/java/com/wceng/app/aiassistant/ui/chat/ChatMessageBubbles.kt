@@ -2,13 +2,13 @@ package com.wceng.app.aiassistant.ui.chat
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
@@ -33,9 +33,9 @@ import com.wceng.app.aiassistant.R
 import com.wceng.app.aiassistant.domain.model.BubbleToMessages
 import com.wceng.app.aiassistant.domain.model.MessageStatus
 import com.wceng.app.aiassistant.ui.theme.AiaImages
-import com.wceng.app.aiassistant.util.AiaAssistChip
-import com.wceng.app.aiassistant.util.MarkDownActions
-import com.wceng.app.aiassistant.util.MarkDownPage
+import com.wceng.app.aiassistant.component.AiaAssistChip
+import com.wceng.app.aiassistant.component.MarkDownActions
+import com.wceng.app.aiassistant.component.MarkDownPage
 
 @Composable
 internal fun UserMessageBubble(
@@ -48,14 +48,18 @@ internal fun UserMessageBubble(
     var showEditUserMessageDialog by remember { mutableStateOf(false) }
     var userEditableText by remember { mutableStateOf("") }
 
+    val userBubbleShape =
+        RoundedCornerShape(topStart = 20.dp, topEnd = 4.dp, bottomStart = 20.dp, bottomEnd = 20.dp)
+
     Row {
         Column(
             horizontalAlignment = Alignment.End
         ) {
             Surface(
                 modifier = modifier,
-                shape = MaterialTheme.shapes.medium,
-                color = MaterialTheme.colorScheme.surfaceContainerHigh
+                shape = userBubbleShape,
+                color = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
                 SelectionContainer {
                     Text(
@@ -64,7 +68,6 @@ internal fun UserMessageBubble(
                     )
                 }
             }
-            Spacer(Modifier.height(4.dp))
 
             MessageUserOperateBar(
                 bubbleToMsg = bubbleToMsg,
@@ -95,36 +98,50 @@ internal fun AssistantMessageBubble(
     onRetryClick: () -> Unit,
     onToggleMessage: (Long) -> Unit,
 ) {
-    Row {
-        bubbleToMsg.currentVersionMessage ?: return
+    bubbleToMsg.currentVersionMessage ?: return
+    val aiBubbleShape =
+        RoundedCornerShape(topStart = 4.dp, topEnd = 20.dp, bottomStart = 20.dp, bottomEnd = 20.dp)
 
+    Row {
         Column(
             horizontalAlignment = Alignment.Start
         ) {
-            SelectionContainer {
-                when (bubbleToMsg.currentVersionMessage.status) {
-                    MessageStatus.LOADING -> CircularProgressIndicator(modifier = Modifier.size(24.dp))
+            Surface(
+                shape = aiBubbleShape,
+                color = MaterialTheme.colorScheme.surfaceVariant,
+            ) {
+                SelectionContainer {
+                    Box(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                        when (bubbleToMsg.currentVersionMessage.status) {
+                            MessageStatus.LOADING -> CircularProgressIndicator(
+                                modifier = Modifier.size(
+                                    24.dp
+                                )
+                            )
 
-                    MessageStatus.FAILED -> Surface(
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                        color = MaterialTheme.colorScheme.errorContainer,
-                        shape = MaterialTheme.shapes.medium
-                    ) {
-                        Text(
-                            text = bubbleToMsg.currentVersionMessage.content,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-                        )
-                    }
+                            MessageStatus.FAILED -> Surface(
+                                contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                                color = MaterialTheme.colorScheme.errorContainer,
+                                shape = MaterialTheme.shapes.medium
+                            ) {
+                                Text(
+                                    text = bubbleToMsg.currentVersionMessage.content,
+                                    modifier = Modifier.padding(
+                                        horizontal = 16.dp,
+                                        vertical = 12.dp
+                                    )
+                                )
+                            }
 
-                    MessageStatus.NORMAL, MessageStatus.STOPPED, MessageStatus.GENERATING, MessageStatus.CANCELED -> {
-                        MarkDownPage(
-                            content = bubbleToMsg.currentVersionMessage.content
-                        )
+                            MessageStatus.NORMAL, MessageStatus.STOPPED, MessageStatus.GENERATING, MessageStatus.CANCELED -> {
+                                MarkDownPage(
+                                    content = bubbleToMsg.currentVersionMessage.content
+                                )
+                            }
+                        }
                     }
                 }
             }
-
-            Spacer(Modifier.height(4.dp))
 
             MessageAssistantOperateBar(
                 modifier = Modifier.align(Alignment.Start),

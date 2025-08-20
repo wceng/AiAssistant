@@ -25,12 +25,15 @@ interface UserSettingsRepository {
     suspend fun setSelectedAiProviderBaseUrl(baseUrl: String)
     suspend fun setSelectedAiProviderModels(models: List<String>)
     suspend fun addSelectedAiProviderModel(model: String)
+    suspend fun existSelectedAiProviderModel(model: String): Boolean
     suspend fun deleteSelectedAiProviderModel(model: String)
     suspend fun setAiProviderInfo(aiProviderInfo: AiProviderInfo)
+    suspend fun existServiceProviderName(name: String): Boolean
     suspend fun addAiProviderInfo(aiProviderInfoName: String)
     suspend fun refreshSelectedAiProviderModels(): Boolean
     suspend fun setThemeScheme(themeSchemeInfo: ThemeSchemeInfo)
     suspend fun setDarkModel(darkModeInfo: DarkModeInfo)
+    suspend fun deleteServiceProvider(providerName: String)
 }
 
 class DefaultUserSettingsRepository(
@@ -84,19 +87,44 @@ class DefaultUserSettingsRepository(
         userSettingsDataSource.setSelectedAiProviderModels(newModels)
     }
 
-    override suspend fun deleteSelectedAiProviderModel(model: String) {
-        val newModels = userSettingsDataSource.useSetting.first()
+    override suspend fun existSelectedAiProviderModel(model: String): Boolean {
+        return userSettingsDataSource.useSetting.first()
             .aiProviderConfigInfo
             .selectedAiProviderInfo
             .models
+            .contains(model)
+    }
+
+    override suspend fun deleteSelectedAiProviderModel(model: String) {
+        val selectedAiProviderInfo = userSettingsDataSource.useSetting.first()
+            .aiProviderConfigInfo
+            .selectedAiProviderInfo
+
+        if (selectedAiProviderInfo.selectedModel == model) {
+            userSettingsDataSource.setAiProvider(
+                selectedAiProviderInfo.copy(selectedModel = "")
+            )
+        }
+        val newModels = selectedAiProviderInfo
+            .models
             .toMutableList()
         newModels.remove(model)
-
         userSettingsDataSource.setSelectedAiProviderModels(newModels)
+
     }
 
     override suspend fun setAiProviderInfo(aiProviderInfo: AiProviderInfo) {
         userSettingsDataSource.setAiProvider(aiProviderInfo)
+    }
+
+    override suspend fun existServiceProviderName(name: String): Boolean {
+        return userSettingsDataSource
+            .useSetting
+            .first()
+            .aiProviderConfigInfo
+            .aiProviderInfos
+            .firstOrNull { name == it.name }
+            ?.let { true } ?: false
     }
 
     override suspend fun addAiProviderInfo(aiProviderInfoName: String) {
@@ -116,6 +144,10 @@ class DefaultUserSettingsRepository(
 
     override suspend fun setDarkModel(darkModeInfo: DarkModeInfo) {
         userSettingsDataSource.setDarkModel(darkModeInfo)
+    }
+
+    override suspend fun deleteServiceProvider(providerName: String) {
+        userSettingsDataSource.removeAiProvider(providerName)
     }
 
     override suspend fun refreshSelectedAiProviderModels(): Boolean {

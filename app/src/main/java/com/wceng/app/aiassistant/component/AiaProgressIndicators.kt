@@ -1,4 +1,4 @@
-package com.wceng.app.aiassistant.util
+package com.wceng.app.aiassistant.component
 
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable

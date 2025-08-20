@@ -33,7 +33,7 @@
     <string name="refresh_models">Refresh models</string>
     <string name="add_model">Add model</string>
     <string name="save_config">Save</string>
-    <string name="edit_conversation_title">Rename conversation</string>
+    <string name="rename_conversation_title">Rename conversation</string>
     <string name="confirm">Confirm</string>
     <string name="add_custom_model">Add custom model</string>
     <string name="custom_service_provider">Custom provider</string>
@@ -61,5 +61,10 @@
     <string name="dark_mode_system">System default</string>
     <string name="dark_mode_light">Light</string>
     <string name="dark_mode_dark">Dark</string>
-
+    <string name="add">Add</string>
+    <string name="confirm_delete_title">Confirm deletion?</string>
+    <string name="delete_service_provider_message">Are you sure you want to delete %s? This action cannot be undone.</string>
+    <string name="delete_selected_conversations_message">Are you sure you want to delete the selected conversations? This action cannot be undone.</string>
+    <string name="close">Close</string>
+    <string name="count_selected">%d selected</string>
 </resources>

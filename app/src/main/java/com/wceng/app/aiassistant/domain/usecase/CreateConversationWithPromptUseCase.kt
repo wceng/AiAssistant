@@ -9,7 +9,8 @@ class CreateConversationWithPromptUseCase(
     private val promptRepository: PromptRepository
 ) {
     suspend operator fun invoke(promptId: Long): Long {
-        val convTitle = promptRepository.getPrompt(promptId)?.title ?: Constant.DEFAULT_NEW_CONVERSATION_TITLE
+        val convTitle = promptRepository.getPrompt(promptId)?.title
+            ?: Constant.DEFAULT_NEW_CONVERSATION_TITLE
         return chatRepository.createNewConversation(convTitle, promptId)
     }
 }

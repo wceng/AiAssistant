@@ -1,4 +1,4 @@
-package com.wceng.app.aiassistant.util
+package com.wceng.app.aiassistant.component
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image

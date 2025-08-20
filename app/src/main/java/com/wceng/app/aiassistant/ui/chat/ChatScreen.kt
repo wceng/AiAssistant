@@ -1,72 +1,81 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.wceng.app.aiassistant.ui.chat
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.exclude
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wceng.app.aiassistant.R
+import com.wceng.app.aiassistant.component.AiaTextFieldAlertDialog
+import com.wceng.app.aiassistant.component.LoadingContent
+import com.wceng.app.aiassistant.component.MarkDownActions
 import com.wceng.app.aiassistant.domain.model.BubbleToMessages
 import com.wceng.app.aiassistant.domain.model.Sender
 import com.wceng.app.aiassistant.ui.theme.AiaImages
 import com.wceng.app.aiassistant.ui.theme.AiaSafeDp
-import com.wceng.app.aiassistant.util.LoadingContent
-import com.wceng.app.aiassistant.util.MarkDownActions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.time.delay
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun ChatScreen(
-    sessionId: Long?,
-    modifier: Modifier = Modifier,
     showBackButton: Boolean = false,
     onBack: () -> Unit = {},
     viewModel: ChatViewModel = koinViewModel<ChatViewModel>(),
     coroutineScope: CoroutineScope = rememberCoroutineScope()
 ) {
-    sessionId?.let {
-        LaunchedEffect(sessionId) {
-            viewModel.updateSessionId(sessionId)
-        }
-    }
-
     val clipboardManager = LocalClipboardManager.current
     val snackbarHostState = remember {
         SnackbarHostState()
@@ -75,12 +84,13 @@ fun ChatScreen(
     val messagesUiState by viewModel.messagesUiState.collectAsStateWithLifecycle()
     val chatUiState by viewModel.chatUiState.collectAsStateWithLifecycle()
 
+    var showEditConversationTitleDialog by remember { mutableStateOf(false) }
+
     fun copyToClipboard(content: String) = coroutineScope.launch {
         clipboardManager.setText(AnnotatedString(content))
     }
 
     ChatContent(
-        modifier = modifier,
         showBackButton = showBackButton,
         messagesUiState = messagesUiState,
         chatUiState = chatUiState,
@@ -90,9 +100,7 @@ fun ChatScreen(
         ),
         messageActions = MessageActions(
             onSendMessage = viewModel::sendMessage,
-            onClearAllMessages = {
-                sessionId?.let { viewModel.clearMessages(sessionId) }
-            },
+            onClearAllMessages = viewModel::clearMessages,
             onCopyMessageContent = ::copyToClipboard,
             onRetrySendUserMessage = viewModel::retrySendUserMessage,
             onDeleteMessage = {
@@ -100,11 +108,29 @@ fun ChatScreen(
             },
             onRetryResponseAiMessage = viewModel::retryResponseAssistantMessage,
             onToggleMessage = viewModel::toggleMessage,
-            onCancelReceiveMessage = viewModel::cancelReceiveMessage
+            onCancelReceiveMessage = viewModel::cancelReceiveMessage,
+            onNewChat = {
+
+            },
+            onRenameConversationTitle = {
+                showEditConversationTitleDialog = true
+            }
         ),
         onBack = onBack
     )
 
+    if (showEditConversationTitleDialog) {
+        AiaTextFieldAlertDialog(
+            title = stringResource(R.string.rename_conversation_title),
+            initialValue = chatUiState.sessionTitle,
+            onDismissRequest = { showEditConversationTitleDialog = false },
+            confirmButtonText = stringResource(R.string.confirm),
+            onConfirmAction = viewModel::renameCurrentConversationTitle,
+            requestFocus = true,
+            singleLine = true,
+            icon = AiaImages.Edit
+        )
+    }
 }
 
 data class MessageActions(
@@ -115,12 +141,13 @@ data class MessageActions(
     val onRetryResponseAiMessage: (aiMessageId: Long) -> Unit,
     val onDeleteMessage: (id: String) -> Unit,
     val onToggleMessage: (targetMessageId: Long) -> Unit,
-    val onCancelReceiveMessage: () -> Unit
+    val onCancelReceiveMessage: () -> Unit,
+    val onNewChat: () -> Unit,
+    val onRenameConversationTitle: () -> Unit
 )
 
 @Composable
 fun ChatContent(
-    modifier: Modifier = Modifier,
     showBackButton: Boolean,
     messagesUiState: MessagesUiState,
     chatUiState: ChatUiState,
@@ -131,16 +158,32 @@ fun ChatContent(
     lazyListState: LazyListState = rememberLazyListState(),
     coroutineScope: CoroutineScope = rememberCoroutineScope()
 ) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
-    fun scrollToBottom() {
-        coroutineScope.launch {
-            delay(200)
-            lazyListState.scrollToRealBottom(false)
+    val jumpToBottomButtonEnabled by remember {
+        derivedStateOf {
+            lazyListState.enableJumpToBottomButton()
         }
     }
 
-    LaunchedEffect(Unit) {
-        scrollToBottom()
+    fun scrollToBottom(delayMs: Long = 0) {
+        if (messagesUiState is MessagesUiState.Success
+            && messagesUiState.bubbleToMessages.isNotEmpty()
+        )
+            coroutineScope.launch {
+//                lazyListState.scrollToRealBottom(true)
+//                lazyListState.animateScrollToItem(messagesUiState.bubbleToMessages.size)
+//                lazyListState.animateScrollBy(Int.MAX_VALUE.toFloat())
+                delayMs.takeIf { it > 0L }?.let { delay(it) }
+                lazyListState.animateScrollToItem(messagesUiState.bubbleToMessages.size + 1)
+            }
+    }
+
+    fun clearInputFocus() {
+        keyboardController?.hide()
+        focusManager.clearFocus()
     }
 
     Scaffold(
@@ -149,41 +192,47 @@ fun ChatContent(
                 title = chatUiState.sessionTitle,
                 onClearAll = messageActions.onClearAllMessages,
                 showBackButton = showBackButton,
-                onBack = onBack
+                onBack = onBack,
+                onNewChat = messageActions.onNewChat,
+                onEdit = messageActions.onRenameConversationTitle,
+                scrollBehavior = scrollBehavior
+            )
+        },
+        bottomBar = {
+            MessageInput(
+                onSend = {
+                    messageActions.onSendMessage(it, chatUiState.prompt)
+                    clearInputFocus()
+                    scrollToBottom(100)
+                },
+                onStop = messageActions.onCancelReceiveMessage,
+                isLoading = chatUiState.isReceiving,
+                modifier = Modifier
+                    .navigationBarsPadding()
+                    .imePadding()
             )
         },
         snackbarHost = {
             SnackbarHost(snackbarHostState)
         },
         floatingActionButton = {
-            if (lazyListState.canScrollForward)
-                ScrollToBottomButton {
+            if (jumpToBottomButtonEnabled) {
+                JumpToBottomButton {
                     scrollToBottom()
                 }
+            }
         },
         floatingActionButtonPosition = FabPosition.Center,
-        bottomBar = {
-            MessageInput(
-                onSend = {
-                    messageActions.onSendMessage(it, chatUiState.prompt)
-                    scrollToBottom()
-                },
-                onStop = messageActions.onCancelReceiveMessage,
-                isLoading = chatUiState.isReceiving,
-                modifier = Modifier
-                    .padding(horizontal = AiaSafeDp.safeHorizontal)
-                    .imePadding()
-            )
-        }
+        contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(WindowInsets.navigationBars)
+            .exclude(WindowInsets.ime),
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
     ) { paddingValues ->
         Column(
-            modifier = modifier.padding(paddingValues)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
         ) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = AiaSafeDp.safeHorizontal),
-            ) {
+            Box(modifier = Modifier.weight(1f)) {
                 when (messagesUiState) {
                     is MessagesUiState.Error, MessagesUiState.Idle -> Unit
                     is MessagesUiState.Loading -> LoadingContent()
@@ -193,7 +242,7 @@ fun ChatContent(
                             verticalArrangement = Arrangement.spacedBy(24.dp),
                             state = lazyListState,
                             userScrollEnabled = true,
-                            contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
+                            contentPadding = PaddingValues(horizontal = AiaSafeDp.safeHorizontal),
                         ) {
                             chatUiState.prompt?.let(::prompt)
 
@@ -202,7 +251,6 @@ fun ChatContent(
                                 markDownActions = markDownActions,
                                 messageActions = messageActions,
                             )
-
                         }
                     }
 
@@ -210,51 +258,40 @@ fun ChatContent(
             }
         }
     }
-}
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ChatTopAppBar(
-    modifier: Modifier = Modifier,
-    title: String,
-    showBackButton: Boolean,
-    onClearAll: () -> Unit = {},
-    onBack: () -> Unit = {}
-) {
-    CenterAlignedTopAppBar(
-        title = { Text(text = title) },
-        modifier = modifier.fillMaxWidth(),
-        navigationIcon = {
-            if (showBackButton)
-                IconButton(onClick = onBack) {
-                    Icon(
-                        imageVector = AiaImages.ArrowBack,
-                        contentDescription = stringResource(R.string.back)
-                    )
-                }
-        },
-
-        actions = {
-            IconButton(onClick = onClearAll) {
-                Icon(
-                    imageVector = AiaImages.ClearAll,
-                    contentDescription = stringResource(id = R.string.clear_all)
-                )
-            }
+    if (messagesUiState is MessagesUiState.Success) {
+        LaunchedEffect(Unit) {
+            scrollToBottom()
         }
-    )
+    }
 }
 
 private fun LazyListScope.prompt(prompt: String) {
     item {
+        var expended by rememberSaveable { mutableStateOf(false) }
+
         Box(
-            modifier = Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center
+            modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center
         ) {
             Surface(
-                modifier = Modifier.clip(MaterialTheme.shapes.medium)
+                modifier = Modifier
+                    .clip(MaterialTheme.shapes.small)
+                    .animateContentSize()
+                    .clickable {
+                        expended = expended.not()
+                    }, contentColor = MaterialTheme.colorScheme.onSurfaceVariant
             ) {
-                Text(text = prompt)
+                if (expended) {
+                    Text(
+                        text = prompt,
+                    )
+                } else {
+                    Text(
+                        text = prompt,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
         }
     }
@@ -280,8 +317,7 @@ fun LazyListScope.messageList(
             onRetrySendUserMessage = {
                 bubble.currentVersionMessage ?: return@MessageItem
                 messageActions.onRetrySendUserMessage(
-                    bubble.currentVersionMessage.id,
-                    it
+                    bubble.currentVersionMessage.id, it
                 )
             },
             onRetryResponseAiMessage = {
@@ -333,38 +369,32 @@ private fun MessageItem(
     }
 }
 
-@Composable
-private fun ScrollToBottomButton(onClick: () -> Unit) {
-    SmallFloatingActionButton(
-        onClick = onClick,
-        modifier = Modifier,
-        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-    ) {
-        Icon(
-            imageVector = AiaImages.KeyboardArrowDown,
-            contentDescription = stringResource(R.string.scroll_to_bottom)
-        )
-    }
-}
-
 suspend fun LazyListState.scrollToRealBottom(animatable: Boolean = false) {
     val lastItem = layoutInfo.totalItemsCount - 1
     if (lastItem >= 0) {
-        if (animatable)
-            animateScrollToItem(lastItem)
-        else
-            scrollToItem(lastItem)
+        if (animatable) animateScrollToItem(lastItem)
+        else scrollToItem(lastItem)
         val viewportHeight = layoutInfo.viewportEndOffset
         val lastItemBottom = layoutInfo.visibleItemsInfo.lastOrNull()?.offset?.let {
             it + layoutInfo.visibleItemsInfo.last().size
         } ?: 0
         val extraScroll = lastItemBottom - viewportHeight
         if (extraScroll > 0) {
-            if (animatable)
-                animateScrollBy(extraScroll.toFloat())
-            else
-                scrollBy(extraScroll.toFloat())
+            if (animatable) animateScrollBy(extraScroll.toFloat())
+            else scrollBy(extraScroll.toFloat())
         }
     }
 }
+
+fun LazyListState.enableJumpToBottomButton(): Boolean {
+    if (layoutInfo.totalItemsCount <= 0) return false
+
+    val bottomOffset = layoutInfo.visibleItemsInfo.lastOrNull()?.offset?.let {
+        it + layoutInfo.visibleItemsInfo.last().size - layoutInfo.viewportEndOffset
+    } ?: 0
+
+    return layoutInfo.visibleItemsInfo.last().index != layoutInfo.totalItemsCount - 1
+            || bottomOffset > JumpToBottomThreshold
+}
+
+private const val JumpToBottomThreshold = 240

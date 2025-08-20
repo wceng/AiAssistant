@@ -4,8 +4,10 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import com.wceng.app.aiassistant.data.ChatRepository
 import com.wceng.app.aiassistant.domain.model.BubbleToMessages
+import com.wceng.app.aiassistant.ui.ChatRoute
 import com.wceng.app.aiassistant.util.Constant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -31,9 +33,15 @@ class ChatViewModel(
     private val savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
+    private val convId = savedStateHandle.toRoute<ChatRoute>().conversationId
+
+    init {
+        println("current chat panel convId: $convId")
+    }
+
     private val cancelableJobMap = mutableMapOf<Long, Job>()
 
-    private val _currentSessionId = savedStateHandle.getStateFlow<Long?>(SESSION_ID_KEY, null)
+    private val _currentSessionId = savedStateHandle.getStateFlow<Long?>(SESSION_ID_KEY, convId)
 
     private val _isReceiving = _currentSessionId
         .flatMapLatest { convId ->
@@ -41,7 +49,7 @@ class ChatViewModel(
                 chatRepository.isMessageActiveInConversation(convId)
                     .distinctUntilChanged()
                     .onEach {
-                        if(it.not()) cancelableJobMap.remove(convId)
+                        if (it.not()) cancelableJobMap.remove(convId)
                     }
             } ?: flow { false }
         }
@@ -92,9 +100,9 @@ class ChatViewModel(
         content: String,
         prompt: String? = null
     ) {
-        val currentConvId = _currentSessionId.value ?: return
-        cancelableJobMap.put(currentConvId, viewModelScope.launch {
-            chatRepository.sendMessage(currentConvId, content, prompt)
+        convId ?: return
+        cancelableJobMap.put(convId, viewModelScope.launch {
+            chatRepository.sendMessage(convId, content, prompt)
         })
     }
 
@@ -102,10 +110,10 @@ class ChatViewModel(
         userMessageId: Long,
         newContent: String
     ) {
-        val currentConvId = _currentSessionId.value ?: return
-        cancelableJobMap.put(currentConvId, viewModelScope.launch {
+        convId ?: return
+        cancelableJobMap.put(convId, viewModelScope.launch {
             chatRepository.retrySendUserMessage(
-                convId = currentConvId,
+                convId = convId,
                 currentVersionMessageId = userMessageId,
                 newVersionMessageContent = newContent
             )
@@ -115,36 +123,39 @@ class ChatViewModel(
     fun retryResponseAssistantMessage(
         aiMessageId: Long,
     ) {
-        val currentConvId = _currentSessionId.value ?: return
-        cancelableJobMap.put(currentConvId, viewModelScope.launch {
-            chatRepository.retryResponseAssistantMessage(currentConvId, aiMessageId)
+        convId ?: return
+        cancelableJobMap.put(convId, viewModelScope.launch {
+            chatRepository.retryResponseAssistantMessage(convId, aiMessageId)
         })
     }
 
     fun toggleMessage(targetMessageId: Long) {
+        convId ?: return
         viewModelScope.launch {
-            val currentConvId = _currentSessionId.value ?: return@launch
-            chatRepository.toggleMessage(currentConvId, targetMessageId)
+            chatRepository.toggleMessage(convId, targetMessageId)
         }
     }
 
-
-    fun clearMessages(sessionId: Long) {
+    fun clearMessages() {
+        convId ?: return
         viewModelScope.launch {
-            chatRepository.clearAllBubbleAndMessages(sessionId)
+            chatRepository.clearAllBubbleAndMessages(convId)
         }
-    }
-
-    fun updateSessionId(sessionId: Long) {
-        savedStateHandle[SESSION_ID_KEY] = sessionId
     }
 
     fun cancelReceiveMessage() {
+        convId ?: return
         viewModelScope.launch {
-            val currentConvId = _currentSessionId.value ?: return@launch
-            cancelableJobMap[currentConvId]?.cancel()
-            cancelableJobMap.remove(currentConvId)
-            chatRepository.cancelReceiveMessage(currentConvId)
+            cancelableJobMap[convId]?.cancel()
+            cancelableJobMap.remove(convId)
+            chatRepository.cancelReceiveMessage(convId)
+        }
+    }
+
+    fun renameCurrentConversationTitle(newTitle: String) {
+        convId ?: return
+        viewModelScope.launch {
+            chatRepository.updateConversationTitle(convId, newTitle)
         }
     }
 }

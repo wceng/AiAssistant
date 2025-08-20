@@ -1,4 +1,4 @@
-package com.wceng.app.aiassistant.util
+package com.wceng.app.aiassistant.component
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.text.selection.SelectionContainer

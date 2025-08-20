@@ -1,63 +1,84 @@
 package com.wceng.app.aiassistant.ui.session
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import com.wceng.app.aiassistant.R
+import androidx.compose.ui.unit.dp
 import com.wceng.app.aiassistant.domain.model.Conversation
 import com.wceng.app.aiassistant.ui.theme.AiaImages
-import com.wceng.app.aiassistant.util.AiaTextFieldAlertDialog
 
 @Composable
 fun SessionListItem(
     conversation: Conversation,
     selected: Boolean,
-    onClick: () -> Unit,
-    onDelete: () -> Unit,
-    onUpdateSessionTitle: (String) -> Unit,
+    selectionModeState: SelectionModeState,
+    onOpenConversation: () -> Unit,
+    onEnableSelectionMode: () -> Unit,
+    onToggleSelectedItem: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var showMenu by remember { mutableStateOf(false) }
-    var showEditDialog by remember { mutableStateOf(false) }
+    //TODO may be block UI
+    val itemSelected = conversation.id in selectionModeState.selectedItems
 
     ListItem(
         modifier = modifier
             .fillMaxWidth()
-            .clickable {
-                onClick()
-            },
+            .heightIn(min = 72.dp)
+            .combinedClickable(
+                onClick = {
+                    if (selectionModeState.isActive) {
+                        onToggleSelectedItem(itemSelected.not())
+                    } else {
+                        onOpenConversation()
+                    }
+                },
+                onLongClick = {
+                    if (selectionModeState.isActive) {
+                        onToggleSelectedItem(itemSelected.not())
+                    } else {
+                        onEnableSelectionMode()
+                        onToggleSelectedItem(true)
+                    }
+                }
+            ),
         colors = ListItemDefaults.colors(
             containerColor = if (selected) {
-                MaterialTheme.colorScheme.primaryContainer
+                MaterialTheme.colorScheme.secondaryContainer
             } else {
                 MaterialTheme.colorScheme.surface
+            },
+            headlineColor = if (selected) {
+                MaterialTheme.colorScheme.onSecondaryContainer
+            } else {
+                MaterialTheme.colorScheme.onSurface
             }
         ),
         leadingContent = {
-            Icon(
-                imageVector = AiaImages.Chat,
-                contentDescription = null,
-                tint = if (selected) {
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                }
-            )
+            if (selectionModeState.isActive) {
+                Checkbox(
+                    checked = itemSelected,
+                    onCheckedChange = onToggleSelectedItem
+                )
+            } else {
+                Icon(
+                    imageVector = AiaImages.Chat,
+                    contentDescription = null,
+                    tint = if (selected) {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    }
+                )
+            }
         },
         headlineContent = {
             Text(
@@ -70,54 +91,6 @@ fun SessionListItem(
                     MaterialTheme.colorScheme.onSurface
                 }
             )
-        },
-        trailingContent = {
-            IconButton(
-                onClick = { showMenu = true },
-            ) {
-                Icon(
-                    imageVector = AiaImages.MoreVert,
-                    contentDescription = stringResource(R.string.more_operates),
-                    tint = if (selected) {
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    }
-                )
-            }
-            DropdownMenu(
-                expanded = showMenu,
-                onDismissRequest = { showMenu = false }
-            ) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.edit)) },
-                    onClick = {
-                        showMenu = false
-                        showEditDialog = true
-                    }
-                )
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.delete)) },
-                    onClick = {
-                        showMenu = false
-                        onDelete()
-                    }
-                )
-            }
-        }
-    )
-
-    if (showEditDialog) {
-        AiaTextFieldAlertDialog(
-            titleRes = R.string.edit_conversation_title,
-            initialValue = conversation.title,
-            onDismissRequest = { showEditDialog = false },
-            confirmButtonTextRes = R.string.confirm,
-            onConfirmAction = onUpdateSessionTitle,
-            requestFocus = true,
-            singleLine = true,
-            icon = AiaImages.Edit
-        )
-    }
+        })
 }
 

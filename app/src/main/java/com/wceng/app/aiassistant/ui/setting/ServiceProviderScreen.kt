@@ -37,6 +37,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -56,15 +57,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wceng.app.aiassistant.R
+import com.wceng.app.aiassistant.component.AiaAssistChip
+import com.wceng.app.aiassistant.component.AiaCircularProgressIndicator
+import com.wceng.app.aiassistant.component.AiaMessageConfirmAlertDialog
+import com.wceng.app.aiassistant.component.AiaTextFieldAlertDialog
+import com.wceng.app.aiassistant.component.LoadingContent
 import com.wceng.app.aiassistant.domain.model.AiProviderInfo
 import com.wceng.app.aiassistant.domain.model.DEFAULT_AI_PROVIDER_CONFIG_INFO
 import com.wceng.app.aiassistant.ui.theme.AiAssistantTheme
 import com.wceng.app.aiassistant.ui.theme.AiaImages
 import com.wceng.app.aiassistant.ui.theme.AiaSafeDp
-import com.wceng.app.aiassistant.util.AiaAssistChip
-import com.wceng.app.aiassistant.util.AiaCircularProgressIndicator
-import com.wceng.app.aiassistant.util.AiaTextFieldAlertDialog
-import com.wceng.app.aiassistant.util.LoadingContent
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -88,7 +90,8 @@ fun ServiceProviderScreen(
             onAddModel = viewModel::addModel,
             onDeleteModel = viewModel::deleteModel,
             onAddCustomServiceProvider = viewModel::addCustomServiceProvider,
-            onResetHostUrl = viewModel::resetHostUrl
+            onResetHostUrl = viewModel::resetHostUrl,
+            onDeleteServiceProvider = viewModel::deleteServiceProvider
         ),
     )
 }
@@ -104,7 +107,8 @@ data class ServiceProviderActions(
     val onAddModel: (String) -> Unit,
     val onDeleteModel: (String) -> Unit,
     val onAddCustomServiceProvider: (String) -> Unit,
-    val onResetHostUrl: (String) -> Unit
+    val onResetHostUrl: (String) -> Unit,
+    val onDeleteServiceProvider: (String) -> Unit
 )
 
 @Composable
@@ -116,11 +120,20 @@ private fun ServiceProviderContent(
 ) {
     var showProviderSheet by remember { mutableStateOf(false) }
     var showCustomServiceProvideDialog by remember { mutableStateOf(false) }
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier,
         topBar = {
-            ServerProviderTopbar(onBack = onBack)
+            ServerProviderTopbar(
+                onBack = onBack,
+                onDelete = {
+                    showDeleteConfirmDialog = true
+                },
+                onAdd = {
+                    showCustomServiceProvideDialog = true
+                }
+            )
         },
         floatingActionButton = {
             if (uiState is ServiceProviderUiState.Success && uiState.isConfigChanged) {
@@ -220,9 +233,6 @@ private fun ServiceProviderContent(
                     providers = uiState.aiProviderConfigInfo.aiProviderInfos,
                     currentProvider = uiState.aiProviderConfigInfo.selectedAiProviderName,
                     onProviderSelected = serviceProviderActions.onSetSelectedProvider,
-                    onCustomServiceProvider = {
-                        showCustomServiceProvideDialog = true
-                    }
                 )
             }
         }
@@ -230,14 +240,31 @@ private fun ServiceProviderContent(
 
     if (showCustomServiceProvideDialog)
         AiaTextFieldAlertDialog(
-            titleRes = R.string.custom_service_provider,
+            title = stringResource(R.string.custom_service_provider),
             onDismissRequest = { showCustomServiceProvideDialog = false },
-            confirmButtonTextRes = R.string.confirm,
+            confirmButtonText = stringResource(R.string.confirm),
             onConfirmAction = serviceProviderActions.onAddCustomServiceProvider,
             icon = AiaImages.Add,
             requestFocus = true,
             singleLine = true,
         )
+
+    if (showDeleteConfirmDialog)
+        if (uiState is ServiceProviderUiState.Success) {
+            val name = uiState.aiProviderConfigInfo.selectedAiProviderName
+            AiaMessageConfirmAlertDialog(
+                title = stringResource(R.string.confirm_delete_title),
+                onDismissRequest = { showDeleteConfirmDialog = false },
+                onConfirmAction = {
+                    serviceProviderActions.onDeleteServiceProvider(name)
+                    showDeleteConfirmDialog = false
+                },
+                text = stringResource(
+                    R.string.delete_service_provider_message, name
+                ),
+                icon = AiaImages.Delete
+            )
+        }
 }
 
 @Composable
@@ -335,19 +362,21 @@ private fun ModelsPanel(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     models.forEach {
-                        if (editable)
-                            AiaAssistChip(
-                                label = it,
-                                selected = it == selectedModel,
-                                onClick = { onDeleteModel(it) },
-                                leadingIconImageVector = AiaImages.Delete,
-                            )
-                        else
-                            AiaAssistChip(
-                                label = it,
-                                selected = it == selectedModel,
-                                onClick = { onSelectModel(it) }
-                            )
+                        key(it) {
+                            if (editable)
+                                AiaAssistChip(
+                                    label = it,
+                                    selected = it == selectedModel,
+                                    onClick = { onDeleteModel(it) },
+                                    leadingIconImageVector = AiaImages.Delete,
+                                )
+                            else
+                                AiaAssistChip(
+                                    label = it,
+                                    selected = it == selectedModel,
+                                    onClick = { onSelectModel(it) }
+                                )
+                        }
                     }
                 }
             }
@@ -355,9 +384,9 @@ private fun ModelsPanel(
 
     if (showAddModelDialog) {
         AiaTextFieldAlertDialog(
-            titleRes = R.string.add_custom_model,
+            title = stringResource(R.string.add_custom_model),
             onDismissRequest = { showAddModelDialog = false },
-            confirmButtonTextRes = R.string.confirm,
+            confirmButtonText = stringResource(R.string.confirm),
             onConfirmAction = onAddModel,
             requestFocus = true,
             singleLine = true,
@@ -373,7 +402,6 @@ private fun AiProviderBottomSheet(
     providers: List<AiProviderInfo>,
     currentProvider: String,
     onProviderSelected: (String) -> Unit,
-    onCustomServiceProvider: () -> Unit
 ) {
     if (show) {
         ModalBottomSheet(
@@ -399,19 +427,6 @@ private fun AiProviderBottomSheet(
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                     )
                 }
-                item {
-                    ListItem(
-                        modifier = Modifier.clickable {
-                            onCustomServiceProvider()
-                            onDismissRequest()
-                        },
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                        leadingContent = {
-                            Icon(imageVector = AiaImages.Add, contentDescription = null)
-                        },
-                        headlineContent = { Text(stringResource(R.string.custom_service_provider)) },
-                    )
-                }
             }
         }
     }
@@ -419,13 +434,27 @@ private fun AiProviderBottomSheet(
 
 @Composable
 private fun ServerProviderTopbar(
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onDelete: () -> Unit,
+    onAdd: () -> Unit
 ) {
     TopAppBar(
         title = {},
         navigationIcon = {
             IconButton(onClick = onBack) {
                 Icon(AiaImages.ArrowBack, contentDescription = stringResource(R.string.back))
+            }
+        },
+        actions = {
+            IconButton(onClick = onDelete) {
+                Icon(
+                    imageVector = AiaImages.Delete,
+                    contentDescription = stringResource(R.string.delete)
+                )
+            }
+
+            IconButton(onClick = onAdd) {
+                Icon(imageVector = AiaImages.Add, contentDescription = stringResource(R.string.add))
             }
         })
 }
@@ -469,7 +498,8 @@ private fun ServiceProviderContentPreview() {
                     onAddModel = { },
                     onDeleteModel = { },
                     onAddCustomServiceProvider = { },
-                    onResetHostUrl = { }
+                    onResetHostUrl = { },
+                    onDeleteServiceProvider = { }
                 ),
                 onBack = {},
             )

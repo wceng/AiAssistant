@@ -33,7 +33,7 @@
     <string name="refresh_models">刷新模型</string>
     <string name="add_model">添加模型</string>
     <string name="save_config">保存配置</string>
-    <string name="edit_conversation_title">重命名对话</string>
+    <string name="rename_conversation_title">重命名对话</string>
     <string name="confirm">确认</string>
     <string name="add_custom_model">添加自定义模型</string>
     <string name="custom_service_provider">自定义服务商</string>
@@ -61,6 +61,10 @@
     <string name="dark_mode_system">系统默认</string>
     <string name="dark_mode_light">浅色</string>
     <string name="dark_mode_dark">深色</string>
-
-
+    <string name="add">添加</string>
+    <string name="confirm_delete_title">确认删除？</string>
+    <string name="delete_service_provider_message">确定要删除 %s 吗？此操作无法撤销。</string>
+    <string name="delete_selected_conversations_message">你确定要删除所选会话吗？此操作不可逆。</string>
+    <string name="close">关闭</string>
+    <string name="count_selected">选中 %d 个</string>
 </resources>

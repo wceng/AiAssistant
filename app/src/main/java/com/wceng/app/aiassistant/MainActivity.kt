@@ -1,17 +1,24 @@
 package com.wceng.app.aiassistant
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.view.ViewCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.wceng.app.aiassistant.ui.LocalWindowWidthSize
 import com.wceng.app.aiassistant.ui.theme.AiAssistantTheme
+import com.wceng.app.aiassistant.util.currentAppLocale
 import com.wceng.app.aiassistant.util.isSystemInDarkTheme
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -24,14 +31,16 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 class MainActivity : AppCompatActivity() {
     val viewModel: MainViewModel by viewModel()
 
+    @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { _, insets -> insets }
 
-//        lifecycleScope.launch {
-//            currentAppLocale().collect {
-//                Log.d("MainActivity", "onCreate: ${it.language}")
-//            }
-//        }
+        lifecycleScope.launch {
+            currentAppLocale().collect {
+                Log.d("MainActivity", "onCreate: ${it.language}")
+            }
+        }
 
         var themeInfos by mutableStateOf(
             ThemeSettings(
@@ -76,27 +85,24 @@ class MainActivity : AppCompatActivity() {
         }
 
         setContent {
-            AiAssistantTheme(
-                darkTheme = themeInfos.darkTheme,
-                dynamicColor = !themeInfos.disableDynamicTheming
+            val windowSizeClass = calculateWindowSizeClass(this@MainActivity)
+
+            CompositionLocalProvider(
+                LocalWindowWidthSize provides windowSizeClass.widthSizeClass
             ) {
-                CommonApp()
+                AiAssistantTheme(
+                    darkTheme = themeInfos.darkTheme,
+                    dynamicColor = !themeInfos.disableDynamicTheming
+                ) {
+                    AiaApp()
+                }
             }
         }
     }
 }
 
-
-/**
- * The DEFAULT light scrim, as defined by androidx and the platform:
- * https://cs.android.com/androidx/platform/frameworks/support/+/androidx-main:activity/activity/src/main/java/androidx/activity/EdgeToEdge.kt;l=35-38;drc=27e7d52e8604a080133e8b842db10c89b4482598
- */
 private val lightScrim = android.graphics.Color.argb(0xe6, 0xFF, 0xFF, 0xFF)
 
-/**
- * The DEFAULT dark scrim, as defined by androidx and the platform:
- * https://cs.android.com/androidx/platform/frameworks/support/+/androidx-main:activity/activity/src/main/java/androidx/activity/EdgeToEdge.kt;l=40-44;drc=27e7d52e8604a080133e8b842db10c89b4482598
- */
 private val darkScrim = android.graphics.Color.argb(0x80, 0x1b, 0x1b, 0x1b)
 
 

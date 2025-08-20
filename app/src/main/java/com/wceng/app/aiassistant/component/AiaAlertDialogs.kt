@@ -1,6 +1,5 @@
-package com.wceng.app.aiassistant.util
+package com.wceng.app.aiassistant.component
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
@@ -20,13 +19,15 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import com.wceng.app.aiassistant.R
 
 @Composable
 fun AiaTextFieldAlertDialog(
-    @StringRes titleRes: Int,
+    title: String,
     onDismissRequest: () -> Unit,
-    @StringRes confirmButtonTextRes: Int,
+    confirmButtonText: String,
     onConfirmAction: (text: String) -> Unit,
     icon: ImageVector? = null,
     requestFocus: Boolean = false,
@@ -35,27 +36,32 @@ fun AiaTextFieldAlertDialog(
     maxLines: Int = if (singleLine) 1 else Int.MAX_VALUE,
     minLines: Int = 1,
 ) {
-    var text by rememberSaveable(initialValue) {
-        mutableStateOf(initialValue)
+    var textFieldValue by remember (initialValue) {
+        mutableStateOf(
+            TextFieldValue(
+                text = initialValue,
+                selection = TextRange(initialValue.length)
+            )
+        )
     }
 
     val focusRequester = remember { FocusRequester() }
 
-    AiaAlertDialog(
+    AlertDialog(
         modifier = Modifier.focusRequester(focusRequester),
         onDismissRequest = onDismissRequest,
         confirmButton = {
             TextButton(
                 onClick = {
-                    onConfirmAction(text)
+                    onConfirmAction(textFieldValue.text)
                     onDismissRequest()
                 },
                 colors = ButtonDefaults.textButtonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             ) {
-                Text(stringResource(confirmButtonTextRes))
+                Text(confirmButtonText)
             }
         },
         dismissButton = {
@@ -66,15 +72,17 @@ fun AiaTextFieldAlertDialog(
         text = {
             AiaTextFiled(
                 modifier = Modifier.fillMaxWidth(),
-                value = text,
-                onValueChange = { text = it },
+                textFieldValue = textFieldValue,
+                onValueChange = { textFieldValue = it },
                 maxLines = maxLines,
                 minLines = minLines,
                 singleLine = singleLine
             )
         },
-        titleRes = titleRes,
-        icon = icon,
+        title = {
+            Text(text = title)
+        },
+        icon = icon?.let { { Icon(imageVector = icon, contentDescription = null) } },
     )
 
     if (requestFocus)
@@ -84,29 +92,32 @@ fun AiaTextFieldAlertDialog(
 }
 
 @Composable
-fun AiaAlertDialog(
-    modifier: Modifier = Modifier,
+fun AiaMessageConfirmAlertDialog(
+    title: String,
     onDismissRequest: () -> Unit,
-    confirmButton: @Composable () -> Unit,
-    dismissButton: @Composable (() -> Unit)? = null,
-    icon: ImageVector? = null,
-    iconContentDescription: String? = null,
-    @StringRes titleRes: Int,
-    text: @Composable (() -> Unit)? = null,
+    onConfirmAction: () -> Unit,
+    text: String? = null,
+    icon: ImageVector? = null
 ) {
     AlertDialog(
-        modifier = modifier,
-        onDismissRequest = onDismissRequest,
-        confirmButton = confirmButton,
-        dismissButton = dismissButton,
-        text = text,
         title = {
-            Text(stringResource(titleRes))
+            Text(text = title)
         },
-        icon = {
-            icon?.let {
-                Icon(imageVector = icon, contentDescription = iconContentDescription)
+        onDismissRequest = onDismissRequest,
+        confirmButton = {
+            TextButton(onClick = {
+                onConfirmAction()
+                onDismissRequest()
+            }) {
+                Text(text = stringResource(R.string.confirm))
             }
-        }
+        },
+        dismissButton = {
+            TextButton(onClick = { onDismissRequest() }) {
+                Text(text = stringResource(R.string.cancel))
+            }
+        },
+        text = text?.let { { Text(it) } },
+        icon = icon?.let { { Icon(imageVector = icon, contentDescription = null) } }
     )
 }
