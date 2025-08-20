@@ -24,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -77,7 +78,7 @@ fun AiaApp(modifier: Modifier = Modifier) {
             if (showTopbar) {
                 if (currentTopLevelDestination != null)
                     AiaTopBar(
-                        title = currentTopLevelDestination.titleText
+                        title = stringResource(currentTopLevelDestination.titleText)
                     )
             }
         },
@@ -105,7 +106,7 @@ fun AiaApp(modifier: Modifier = Modifier) {
                                 contentDescription = null
                             )
                         },
-                        label = { Text(it.iconText) },
+                        label = { Text(stringResource(it.iconText)) },
                     )
                 }
 

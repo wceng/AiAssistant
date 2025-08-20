@@ -1,16 +1,21 @@
 package com.wceng.app.aiassistant.domain.model
 
+import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 
-@Immutable
-data class ConversationGroup(
-    val title: String,
-    val conversations: List<Conversation>
-)
 
-enum class GroupType {
-    TODAY,
-    LAST_7_DAYS,
-    LAST_30_DAYS,
-    BY_YEAR_MONTH
+@Immutable
+sealed class ConversationGroup {
+    abstract val conversations: List<Conversation>
+
+    data class SimpleGroup(
+        @StringRes val titleRes: Int,
+        override val conversations: List<Conversation>
+    ) : ConversationGroup()
+
+    data class YearMonthGroup(
+        val year: Int,
+        val month: Int,
+        override val conversations: List<Conversation>
+    ) : ConversationGroup()
 }

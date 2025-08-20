@@ -1,6 +1,5 @@
 package com.wceng.app.aiassistant.ui.chat
 
-import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.scrollBy
@@ -30,7 +29,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -38,7 +36,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
@@ -74,7 +71,6 @@ fun ChatScreen(
     val snackbarHostState = remember {
         SnackbarHostState()
     }
-    val context = LocalContext.current
 
     val messagesUiState by viewModel.messagesUiState.collectAsStateWithLifecycle()
     val chatUiState by viewModel.chatUiState.collectAsStateWithLifecycle()
@@ -102,10 +98,9 @@ fun ChatScreen(
             onDeleteMessage = {
 
             },
-            onPauseGenerateMessage = viewModel::pauseGeneratingMessage,
-            onResumeGenerateMessage = viewModel::resumeGeneratingMessage,
             onRetryResponseAiMessage = viewModel::retryResponseAssistantMessage,
-            onToggleMessage = viewModel::toggleMessage
+            onToggleMessage = viewModel::toggleMessage,
+            onCancelReceiveMessage = viewModel::cancelReceiveMessage
         ),
         onBack = onBack
     )
@@ -119,9 +114,8 @@ data class MessageActions(
     val onRetrySendUserMessage: (id: Long, content: String) -> Unit,
     val onRetryResponseAiMessage: (aiMessageId: Long) -> Unit,
     val onDeleteMessage: (id: String) -> Unit,
-    val onPauseGenerateMessage: () -> Unit,
-    val onResumeGenerateMessage: () -> Unit,
     val onToggleMessage: (targetMessageId: Long) -> Unit,
+    val onCancelReceiveMessage: () -> Unit
 )
 
 @Composable
@@ -174,6 +168,7 @@ fun ChatContent(
                     messageActions.onSendMessage(it, chatUiState.prompt)
                     scrollToBottom()
                 },
+                onStop = messageActions.onCancelReceiveMessage,
                 isLoading = chatUiState.isReceiving,
                 modifier = Modifier
                     .padding(horizontal = AiaSafeDp.safeHorizontal)
@@ -232,7 +227,10 @@ private fun ChatTopAppBar(
         navigationIcon = {
             if (showBackButton)
                 IconButton(onClick = onBack) {
-                    Icon(imageVector = AiaImages.ArrowBack, contentDescription = "Back")
+                    Icon(
+                        imageVector = AiaImages.ArrowBack,
+                        contentDescription = stringResource(R.string.back)
+                    )
                 }
         },
 
@@ -307,10 +305,6 @@ private fun MessageItem(
     onRetryResponseAiMessage: () -> Unit,
     onToggleMessage: (Long) -> Unit,
 ) {
-    SideEffect {
-//        println("正在发生重组的气泡的Id： ${bubbleToMessages.bubble.id}")
-    }
-
     Box(
         modifier = modifier.fillMaxWidth(),
         contentAlignment = when (bubbleToMessages.bubble.sender) {

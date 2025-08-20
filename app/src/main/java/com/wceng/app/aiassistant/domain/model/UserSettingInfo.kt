@@ -1,12 +1,13 @@
 package com.wceng.app.aiassistant.domain.model
 
 import androidx.compose.runtime.Immutable
+import com.wceng.app.aiassistant.util.Constant
 
 @Immutable
 data class UserSettingInfo(
     val aiProviderConfigInfo: AiProviderConfigInfo,
     val themeSchemeInfo: ThemeSchemeInfo,
-    val darkModeInfo: DarkModeInfo
+    val darkModeInfo: DarkModeInfo,
 )
 
 @Immutable
@@ -32,15 +33,15 @@ val defaultAiProviders = listOf(
     AiProviderInfo(
         name = "OpenAI",
         apiKey = "",
-        baseUrl = "https://api.openai.com/v1",
-        models = listOf("gpt-3.5-turbo", "gpt-4"),
-        selectedModel = "gpt-3.5-turbo"
+        baseUrl = Constant.OPENAI_HOST_URL,
+        models = listOf("gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-4"),
+        selectedModel = "gpt-4o"
     ),
     AiProviderInfo(
         name = "DeepSeek",
         apiKey = "sk-d2b158ec85794ced89a9bfdb5d00c238",
-        baseUrl = "https://api.deepseek.com/v1",
-        models = listOf("deepseek-chat", "deepseek-coder", "deepseek-reasoner"),
+        baseUrl = Constant.DEEPSEEK_HOST_URL,
+        models = listOf("deepseek-chat", "deepseek-reasoner"),
         selectedModel = "deepseek-chat"
     )
 ).reversed()

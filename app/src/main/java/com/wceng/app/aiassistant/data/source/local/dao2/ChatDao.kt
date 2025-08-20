@@ -51,6 +51,33 @@ interface ChatDao {
     )
     fun getLatestConversations(): Flow<List<ConversationEntity>>
 
+    @Transaction
+    @Query(
+        """
+        SELECT COUNT(*) >= 1 
+        FROM message 
+        INNER JOIN bubble ON bubble.id = message.bubble_id 
+        INNER JOIN conversation ON conversation.id = bubble.conversation_id
+        WHERE conversation.id = :convId 
+        AND message.status IN (1, 4)
+        """
+    )
+    fun isMessageActiveInConversation(convId: Long): Flow<Boolean>
+
+    @Transaction
+    @Query(
+        """
+        SELECT * 
+        FROM message 
+        INNER JOIN bubble ON bubble.id = message.bubble_id 
+        INNER JOIN conversation ON conversation.id = bubble.conversation_id
+        WHERE conversation.id = :convId 
+        AND message.status IN (1, 4)
+        LIMIT 1
+        """
+    )
+    suspend fun getActiveMessageInConversation(convId: Long): MessageEntity?
+
     @Query(
         """
         update conversation 

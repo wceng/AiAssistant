@@ -24,7 +24,7 @@ class UserSettingsDataSource(
             datastore.data.first()
                 .apply {
                     if (selectedAiProviderName.isEmpty() && aiProvidersMap.isEmpty()) {
-                        datastore.updateData {preferences ->
+                        datastore.updateData { preferences ->
                             val initAiProviders = DEFAULT_AI_PROVIDER_CONFIG_INFO.aiProviderInfos
                                 .map { it.asProto() }
                                 .associateBy { it.name }
@@ -81,7 +81,7 @@ class UserSettingsDataSource(
         }
     }
 
-    suspend fun updateAiProvider(aiProviderInfo: AiProviderInfo) {
+    suspend fun setAiProvider(aiProviderInfo: AiProviderInfo) {
         datastore.updateData { userPreferences ->
             userPreferences.toBuilder()
                 .putAiProviders(aiProviderInfo.name, aiProviderInfo.asProto())
@@ -121,6 +121,19 @@ class UserSettingsDataSource(
                 .aiProviderConfigInfo
                 .selectedAiProviderInfo
                 .copy(selectedModel = model)
+
+            userPreferences.toBuilder()
+                .putAiProviders(updatedAiProvider.name, updatedAiProvider.asProto())
+                .build()
+        }
+    }
+
+    suspend fun setSelectedAiProviderModels(models: List<String>) {
+        datastore.updateData { userPreferences ->
+            val updatedAiProvider = useSetting.first()
+                .aiProviderConfigInfo
+                .selectedAiProviderInfo
+                .copy(models = models)
 
             userPreferences.toBuilder()
                 .putAiProviders(updatedAiProvider.name, updatedAiProvider.asProto())

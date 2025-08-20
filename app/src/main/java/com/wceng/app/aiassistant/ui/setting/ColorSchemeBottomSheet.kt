@@ -20,9 +20,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.wceng.app.aiassistant.R
 import com.wceng.app.aiassistant.domain.model.DarkModeInfo
 import com.wceng.app.aiassistant.domain.model.ThemeSchemeInfo
 import com.wceng.app.aiassistant.ui.theme.AiaSafeDp
@@ -71,32 +73,32 @@ private fun ColorSchemeBottomSheetContent(
                 Column(
                     modifier = Modifier.padding(horizontal = AiaSafeDp.safeHorizontal)
                 ) {
-                    Text(text = "Theme", style = MaterialTheme.typography.titleMedium)
+                    Text(text = stringResource(R.string.color_scheme_title), style = MaterialTheme.typography.titleMedium)
                     ThemeChooserRow(
-                        text = "Default",
+                        text = stringResource(R.string.theme_default),
                         selected = uiState.colorSchemeSettings.themeSchemeInfo == ThemeSchemeInfo.Default,
                         onClick = { actions.onSelectThemeScheme(ThemeSchemeInfo.Default) }
                     )
                     ThemeChooserRow(
-                        text = "Dynamic",
+                        text = stringResource(R.string.theme_dynamic),
                         selected = uiState.colorSchemeSettings.themeSchemeInfo == ThemeSchemeInfo.Dynamic,
                         onClick = { actions.onSelectThemeScheme(ThemeSchemeInfo.Dynamic) }
                     )
 
                     Spacer(Modifier.height(8.dp))
-                    Text(text = "Dark mode", style = MaterialTheme.typography.titleMedium)
+                    Text(text = stringResource(R.string.dark_mode_title), style = MaterialTheme.typography.titleMedium)
                     ThemeChooserRow(
-                        text = "System DEFAULT",
+                        text = stringResource(R.string.dark_mode_system),
                         selected = uiState.colorSchemeSettings.darkModeInfo == DarkModeInfo.System,
                         onClick = { actions.onSelectDarkModeInfo(DarkModeInfo.System) }
                     )
                     ThemeChooserRow(
-                        text = "Light",
+                        text = stringResource(R.string.dark_mode_light),
                         selected = uiState.colorSchemeSettings.darkModeInfo == DarkModeInfo.Light,
                         onClick = { actions.onSelectDarkModeInfo(DarkModeInfo.Light) }
                     )
                     ThemeChooserRow(
-                        text = "Dark",
+                        text = stringResource(R.string.dark_mode_dark),
                         selected = uiState.colorSchemeSettings.darkModeInfo == DarkModeInfo.Dark,
                         onClick = { actions.onSelectDarkModeInfo(DarkModeInfo.Dark) }
                     )

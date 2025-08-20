@@ -8,18 +8,22 @@ import com.wceng.app.aiassistant.data.ChatRepository
 import com.wceng.app.aiassistant.domain.model.BubbleToMessages
 import com.wceng.app.aiassistant.util.Constant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+
+private const val SESSION_ID_KEY = "session_id_key"
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChatViewModel(
@@ -27,10 +31,22 @@ class ChatViewModel(
     private val savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-    private val _currentSessionId = MutableStateFlow<Long?>(null)
-    private val _isReceiving = MutableStateFlow(false)
+    private val cancelableJobMap = mutableMapOf<Long, Job>()
 
-    private val currentSession = _currentSessionId
+    private val _currentSessionId = savedStateHandle.getStateFlow<Long?>(SESSION_ID_KEY, null)
+
+    private val _isReceiving = _currentSessionId
+        .flatMapLatest { convId ->
+            convId?.let {
+                chatRepository.isMessageActiveInConversation(convId)
+                    .distinctUntilChanged()
+                    .onEach {
+                        if(it.not()) cancelableJobMap.remove(convId)
+                    }
+            } ?: flow { false }
+        }
+
+    private val _currentSession = _currentSessionId
         .flatMapLatest { sessionId ->
             sessionId?.let {
                 chatRepository.getConversationWithPromptFlow(it)
@@ -39,7 +55,7 @@ class ChatViewModel(
 
     val chatUiState: StateFlow<ChatUiState> =
         combine(
-            currentSession, _isReceiving
+            _currentSession, _isReceiving
         ) { currentSession, isReceiving ->
             ChatUiState(
                 sessionTitle = currentSession?.conversation?.title ?: "",
@@ -62,6 +78,7 @@ class ChatViewModel(
                     .onStart<MessagesUiState> { emit(MessagesUiState.Loading) }
                     .catch {
                         MessagesUiState.Error(it.message ?: "Unknown error")
+                        it.printStackTrace()
                     }
             } ?: flowOf(MessagesUiState.Idle)
         }
@@ -75,41 +92,33 @@ class ChatViewModel(
         content: String,
         prompt: String? = null
     ) {
-        viewModelScope.launch {
-            val currentConvId = _currentSessionId.value ?: return@launch
-            _isReceiving.value = true
-            chatRepository.sendMessageWithStream(currentConvId, content, prompt)
-            _isReceiving.value = false
-        }
+        val currentConvId = _currentSessionId.value ?: return
+        cancelableJobMap.put(currentConvId, viewModelScope.launch {
+            chatRepository.sendMessage(currentConvId, content, prompt)
+        })
     }
 
     fun retrySendUserMessage(
         userMessageId: Long,
         newContent: String
     ) {
-        viewModelScope.launch {
-            val currentConvId = _currentSessionId.value ?: return@launch
-
-            _isReceiving.value = true
+        val currentConvId = _currentSessionId.value ?: return
+        cancelableJobMap.put(currentConvId, viewModelScope.launch {
             chatRepository.retrySendUserMessage(
                 convId = currentConvId,
                 currentVersionMessageId = userMessageId,
                 newVersionMessageContent = newContent
             )
-            _isReceiving.value = false
-        }
+        })
     }
 
     fun retryResponseAssistantMessage(
         aiMessageId: Long,
     ) {
-        viewModelScope.launch {
-            val currentConvId = _currentSessionId.value ?: return@launch
-
-            _isReceiving.value = true
+        val currentConvId = _currentSessionId.value ?: return
+        cancelableJobMap.put(currentConvId, viewModelScope.launch {
             chatRepository.retryResponseAssistantMessage(currentConvId, aiMessageId)
-            _isReceiving.value = false
-        }
+        })
     }
 
     fun toggleMessage(targetMessageId: Long) {
@@ -127,15 +136,16 @@ class ChatViewModel(
     }
 
     fun updateSessionId(sessionId: Long) {
-        _currentSessionId.value = sessionId
+        savedStateHandle[SESSION_ID_KEY] = sessionId
     }
 
-    fun pauseGeneratingMessage() {
-//        getMessagesUseCase.pause()
-    }
-
-    fun resumeGeneratingMessage() {
-//        getMessagesUseCase.resume()
+    fun cancelReceiveMessage() {
+        viewModelScope.launch {
+            val currentConvId = _currentSessionId.value ?: return@launch
+            cancelableJobMap[currentConvId]?.cancel()
+            cancelableJobMap.remove(currentConvId)
+            chatRepository.cancelReceiveMessage(currentConvId)
+        }
     }
 }
 

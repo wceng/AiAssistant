@@ -26,6 +26,7 @@ import com.wceng.app.aiassistant.ui.chat.ChatViewModel
 import com.wceng.app.aiassistant.ui.prompt.PromptViewModel
 import com.wceng.app.aiassistant.ui.session.SessionViewModel
 import com.wceng.app.aiassistant.ui.setting.ColorSchemeViewModel
+import com.wceng.app.aiassistant.ui.setting.LanguageViewModel
 import com.wceng.app.aiassistant.ui.setting.ServiceProviderViewModel
 import com.wceng.app.aiassistant.ui.setting.SettingViewModel
 import io.ktor.client.HttpClient
@@ -65,14 +66,8 @@ val dataModule = module {
         ) {
             androidApplication().dataStoreFile("user_preferences.pb")
         }
-//        PreferenceDataStoreFactory.createWithPath(
-//            produceFile = {
-//                androidApplication().filesDir.resolve("chat.preferences_pb").absolutePath.toPath()
-//            }
-//        )
     }
     singleOf(::UserSettingsDataSource)
-
     singleOf(::OpenAiProvider)
     singleOf(::OpenAIChatApi) { bind<ChatApi>() }
 
@@ -107,6 +102,7 @@ val viewModelModule = module {
     viewModelOf(::ServiceProviderViewModel)
     viewModelOf(::ColorSchemeViewModel)
     viewModelOf(::MainViewModel)
+    viewModelOf(::LanguageViewModel)
 }
 
 val configModule = module {

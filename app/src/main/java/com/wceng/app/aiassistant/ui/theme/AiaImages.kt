@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.AttachFile
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.ClearAll
 import androidx.compose.material.icons.rounded.Close
@@ -17,14 +18,17 @@ import androidx.compose.material.icons.rounded.Cloud
 import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Feedback
 import androidx.compose.material.icons.rounded.Forum
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Key
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.LightMode
+import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Person
@@ -32,10 +36,16 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Save
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.SmartToy
+import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
 
 object AiaImages {
+    val Delete = Icons.Rounded.Delete
+    val AutoAwesome = Icons.Rounded.AutoAwesome
+    val Key = Icons.Rounded.Key
+    val Link = Icons.Rounded.Link
+    val Stop = Icons.Rounded.Stop
     val Send = Icons.AutoMirrored.Rounded.Send
     val KeyboardArrowDown = Icons.Rounded.KeyboardArrowDown
     val KeyboardArrowLeft = Icons.AutoMirrored.Rounded.KeyboardArrowLeft

@@ -29,14 +29,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.mikepenz.markdown.m3.Markdown
-import com.mikepenz.markdown.model.rememberMarkdownState
 import com.wceng.app.aiassistant.R
 import com.wceng.app.aiassistant.domain.model.BubbleToMessages
 import com.wceng.app.aiassistant.domain.model.MessageStatus
 import com.wceng.app.aiassistant.ui.theme.AiaImages
 import com.wceng.app.aiassistant.util.AiaAssistChip
 import com.wceng.app.aiassistant.util.MarkDownActions
+import com.wceng.app.aiassistant.util.MarkDownPage
 
 @Composable
 internal fun UserMessageBubble(
@@ -117,11 +116,10 @@ internal fun AssistantMessageBubble(
                         )
                     }
 
-                    MessageStatus.NORMAL, MessageStatus.STOPPED, MessageStatus.GENERATING -> {
-                        val markdownState = rememberMarkdownState(
-                            content = bubbleToMsg.currentVersionMessage.content, immediate = true
+                    MessageStatus.NORMAL, MessageStatus.STOPPED, MessageStatus.GENERATING, MessageStatus.CANCELED -> {
+                        MarkDownPage(
+                            content = bubbleToMsg.currentVersionMessage.content
                         )
-                        Markdown(markdownState = markdownState)
                     }
                 }
             }
@@ -154,12 +152,14 @@ private fun MessageUserOperateBar(
     ) {
         AiaAssistChip(
             R.string.copy,
-            leadingIcon = AiaImages.ContentCopy,
+            leadingIconImageVector = AiaImages.ContentCopy,
+            selected = false,
             onClick = onCopyClick,
         )
         AiaAssistChip(
             R.string.edit,
-            leadingIcon = AiaImages.Edit,
+            leadingIconImageVector = AiaImages.Edit,
+            selected = false,
             onClick = onEditClick,
         )
 
@@ -211,13 +211,15 @@ private fun MessageAssistantOperateBar(
                 }
             )
         AiaAssistChip(
-            R.string.copy,
-            leadingIcon = AiaImages.ContentCopy,
+            labelRes = R.string.copy,
+            leadingIconImageVector = AiaImages.ContentCopy,
+            selected = false,
             onClick = onCopyClick,
         )
         AiaAssistChip(
             R.string.retry_response,
-            leadingIcon = AiaImages.Refresh,
+            leadingIconImageVector = AiaImages.Refresh,
+            selected = false,
             onClick = onRetryClick,
         )
     }

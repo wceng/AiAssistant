@@ -30,8 +30,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.wceng.app.aiassistant.R
 import com.wceng.app.aiassistant.ui.theme.AiaImages
 import com.wceng.app.aiassistant.ui.theme.AiaSafeDp
 import com.wceng.app.aiassistant.util.Constant
@@ -51,12 +53,18 @@ fun SettingScreen(
         mutableStateOf(false)
     }
 
+    var showLanguageBottomSheet by remember {
+        mutableStateOf(false)
+    }
+
     SettingContent(
         modifier = modifier,
         settingActions = SettingActions(
             onClickServiceProvider = onNavigateToServerProviderScreen,
             onClickConversationSetting = {},
-            onClickLanguage = {},
+            onClickLanguage = {
+                showLanguageBottomSheet = true
+            },
             onClickAppearance = {
                 showColorSchemeBottomSheet = true
             },
@@ -74,6 +82,13 @@ fun SettingScreen(
     ColorSchemeBottomSheet(
         show = showColorSchemeBottomSheet,
         onDismissRequest = { showColorSchemeBottomSheet = false }
+    )
+
+    LanguageBottomSheet(
+        show = showLanguageBottomSheet,
+        onDismissRequest = {
+            showLanguageBottomSheet = false
+        },
     )
 }
 
@@ -101,64 +116,64 @@ private fun SettingContent(
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         SettingItemPanel(
-            title = "Service Provider Config",
+            title = stringResource(R.string.service_provider),
         ) {
             SettingItem(
-                title = "Service Provider",
+                title = stringResource(R.string.service_provider),
                 onClick = settingActions.onClickServiceProvider,
                 leadingIcon = AiaImages.Cloud
             )
         }
 
         SettingItemPanel(
-            title = "Conversation",
+            title = stringResource(R.string.setting_conversation_section),
         ) {
             SettingItem(
-                title = "Conversation Setting",
+                title = stringResource(R.string.setting_conversation_section),
                 onClick = settingActions.onClickConversationSetting,
                 leadingIcon = AiaImages.Forum
             )
         }
 
         SettingItemPanel(
-            title = "Display",
+            title = stringResource(R.string.setting_display_section),
         ) {
             SettingItem(
-                title = "Language",
+                title = stringResource(R.string.setting_language),
                 onClick = settingActions.onClickLanguage,
                 leadingIcon = AiaImages.Language
             )
 
             SettingItem(
-                title = "Appearance",
+                title = stringResource(R.string.setting_appearance),
                 onClick = settingActions.onClickAppearance,
                 leadingIcon = AiaImages.Palette
             )
         }
 
         SettingItemPanel(
-            title = "About",
+            title = stringResource(R.string.setting_about_section),
         ) {
             SettingItem(
-                title = "Version",
+                title = stringResource(R.string.setting_version),
                 onClick = settingActions.onClickVersion,
                 leadingIcon = AiaImages.Info
             )
 
             SettingItem(
-                title = "License",
+                title = stringResource(R.string.setting_license),
                 onClick = settingActions.onClickLicense,
                 leadingIcon = AiaImages.Description
             )
 
             SettingItem(
-                title = "Github",
+                title = stringResource(R.string.setting_github),
                 onClick = settingActions.onClickGithub,
                 leadingIcon = AiaImages.Code
             )
 
             SettingItem(
-                title = "Feedback",
+                title = stringResource(R.string.setting_feedback),
                 onClick = settingActions.onClickFeedback,
                 leadingIcon = AiaImages.Feedback
             )

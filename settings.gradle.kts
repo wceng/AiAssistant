@@ -7,6 +7,7 @@ pluginManagement {
                 includeGroupByRegex("androidx.*")
             }
         }
+
         mavenCentral()
         gradlePluginPortal()
     }
@@ -21,4 +22,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "Ai Assistant"
 include(":app")
- 

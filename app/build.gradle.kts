@@ -51,6 +51,10 @@ android {
     room {
         schemaDirectory("$projectDir/schemas")
     }
+
+//    androidResources {
+//        generateLocaleConfig = true
+//    }
 }
 
 dependencies {
@@ -92,10 +96,15 @@ dependencies {
 
 
     //Markdown Renderer
+    implementation(libs.markdown.renderer)
     implementation(libs.markdown.renderer.m3)
     implementation(libs.markdown.renderer.coil3)
     implementation(libs.markdown.renderer.code)
     implementation(libs.markdown.renderer.android)
+
+    //Coil
+    implementation(libs.coil.network.okhttp)
+    implementation(libs.coil.svg)
 
     //Ktor
     implementation(libs.ktor.client.core)

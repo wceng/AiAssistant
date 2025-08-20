@@ -19,10 +19,10 @@ class MainViewModel(
     val uiState: StateFlow<MainUiState> = userSettingsRepository.userSettingInfo
         .map {
             MainUiState.Success(
-                ThemeInfos(
+                themeInfos = ThemeInfos(
                     it.darkModeInfo,
                     it.themeSchemeInfo
-                )
+                ),
             )
         }
         .distinctUntilChanged()
@@ -42,7 +42,7 @@ data class ThemeInfos(
 sealed interface MainUiState {
     data object Loading : MainUiState
     data class Success(
-        val themeInfos: ThemeInfos
+        val themeInfos: ThemeInfos,
     ) : MainUiState {
         override fun shouldUseDarkTheme(isSystemDarkTheme: Boolean): Boolean =
             when (themeInfos.darkModeInfo) {
@@ -61,5 +61,6 @@ sealed interface MainUiState {
     val shouldDisableDynamicTheming: Boolean get() = true
 
     fun shouldUseDarkTheme(isSystemDarkTheme: Boolean) = isSystemDarkTheme
+
 }
 

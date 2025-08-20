@@ -8,7 +8,7 @@ import androidx.navigation.compose.navigation
 import com.wceng.app.aiassistant.AiaAppState
 import com.wceng.app.aiassistant.ui.prompt.PromptScreen
 import com.wceng.app.aiassistant.ui.setting.LicenseScreen
-import com.wceng.app.aiassistant.ui.setting.ServerProviderScreen
+import com.wceng.app.aiassistant.ui.setting.ServiceProviderScreen
 import com.wceng.app.aiassistant.ui.setting.SettingScreen
 import kotlinx.serialization.Serializable
 
@@ -74,7 +74,7 @@ fun AiaNav(
             }
 
             composable<SettingServiceProviderRoute> {
-                ServerProviderScreen{
+                ServiceProviderScreen{
                     navController.navigateUp()
                 }
             }

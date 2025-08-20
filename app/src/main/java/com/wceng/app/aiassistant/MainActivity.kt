@@ -1,10 +1,10 @@
 package com.wceng.app.aiassistant
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -20,11 +20,18 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-class MainActivity : ComponentActivity() {
+
+class MainActivity : AppCompatActivity() {
     val viewModel: MainViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+//        lifecycleScope.launch {
+//            currentAppLocale().collect {
+//                Log.d("MainActivity", "onCreate: ${it.language}")
+//            }
+//        }
 
         var themeInfos by mutableStateOf(
             ThemeSettings(

@@ -22,39 +22,28 @@ interface ChatRepository {
     fun getLatestConversations(): Flow<List<Conversation>>
     fun getConversationFlow(convId: Long): Flow<Conversation?>
     fun getConversationWithPromptFlow(convId: Long): Flow<ConversationWithPromptInfo?>
-
-    suspend fun createNewConversation(title: String, promptId: Long? = null): Long
-    suspend fun deleteConversation(id: Long)
-    suspend fun getConversation(id: Long): Conversation?
-    suspend fun updateConversationTitle(id: Long, newTitle: String)
-
-    suspend fun sendMessageWithStream(
-        convId: Long,
-        content: String,
-        prompt: String? = null
-    )
-
-    suspend fun clearAllBubbleAndMessages(conversationId: Long)
-
     fun getBubbleToMessages(
         convId: Long,
         isDescending: Boolean = false
     ): Flow<List<BubbleToMessages>>
 
+    fun isMessageActiveInConversation(convId: Long): Flow<Boolean>
+    suspend fun createNewConversation(title: String, promptId: Long? = null): Long
+    suspend fun deleteConversation(id: Long)
+    suspend fun getConversation(id: Long): Conversation?
+    suspend fun updateConversationTitle(id: Long, newTitle: String)
+    suspend fun sendMessage(convId: Long, content: String, prompt: String? = null)
+    suspend fun clearAllBubbleAndMessages(conversationId: Long)
     suspend fun retrySendUserMessage(
         convId: Long,
         currentVersionMessageId: Long,
         newVersionMessageContent: String,
     )
 
-    suspend fun retryResponseAssistantMessage(
-        convId: Long,
-        currentVersionMessageId: Long,
-    )
-
+    suspend fun retryResponseAssistantMessage(convId: Long, currentVersionMessageId: Long)
     suspend fun toggleMessage(convId: Long, targetMessageId: Long)
+    suspend fun cancelReceiveMessage(convId: Long)
 }
-
 
 class DefaultChatRepository(
     private val remote: ChatApi,
@@ -75,6 +64,49 @@ class DefaultChatRepository(
             it.asBubbleToMessages()
         }
 
+    override fun isMessageActiveInConversation(convId: Long): Flow<Boolean> {
+        return chatDao.isMessageActiveInConversation(convId)
+    }
+
+    override fun getConversationFlow(convId: Long): Flow<Conversation?> {
+        return chatDao.getConversationFlowById(convId)
+            .map { it?.let(ConversationEntity::asExternalModel) }
+    }
+
+    override fun getConversationWithPromptFlow(convId: Long): Flow<ConversationWithPromptInfo?> {
+        return chatDao.getConversationWithPromptFlow(convId)
+            .map { it?.asConversationWithPromptInfo() }
+    }
+
+    override suspend fun sendMessage(
+        convId: Long,
+        content: String,
+        prompt: String?
+    ) {
+        runCatching {
+            if (!chatDao.existConversation(convId)) {
+                throw IllegalStateException("要发送消息使用的会话ID不存在")
+            }
+
+            chatDao.continueMessage(
+                convId = convId,
+                sender = "user",
+                status = MessageStatus.NORMAL.value,
+                content = content,
+            )
+
+            //创建ai消息占位
+            val aiMessageId = chatDao.continueMessage(
+                convId = convId,
+                sender = "ai",
+                status = MessageStatus.LOADING.value,
+                content = ""
+            ).second
+
+            executeSendMessageRequest(convId, aiMessageId)
+        }
+    }
+
     override suspend fun retrySendUserMessage(
         convId: Long,
         currentVersionMessageId: Long,
@@ -86,7 +118,15 @@ class DefaultChatRepository(
             newVersionMessageContent
         )
 
-        executeSendMessageRequest(convId)
+        //创建ai消息占位
+        val aiMessageId = chatDao.continueMessage(
+            convId = convId,
+            sender = "ai",
+            status = MessageStatus.LOADING.value,
+            content = ""
+        ).second
+
+        executeSendMessageRequest(convId, aiMessageId)
     }
 
     override suspend fun retryResponseAssistantMessage(
@@ -100,64 +140,17 @@ class DefaultChatRepository(
             newVersionMessageStatus = MessageStatus.LOADING.value
         ).second
 
-        val historyMessages = chatDao.getCurrentVersionMessages(convId)
-            .filter {
-                it.status == MessageStatus.NORMAL.value ||
-                        it.status == MessageStatus.STOPPED.value
-            }
-            .map {
-                val sender = chatDao.getMessageSender(it.id) ?: ""
-                it.asNetwork(sender = sender)
-            }
-            .filter { it.sender.isNotEmpty() }
-
-        val convPrompt = promptDao.getPromptContentByConvId(convId) ?: Constant.DEFAULT_PROMPT
-
-        var accumulatedContent = ""
-        var isFirstChunk = true
-        remote.receiveResponseMessageWithFlow(historyMessages, prompt = convPrompt)
-            .catch {
-                chatDao.updateMessageStatus(aiMessageId, MessageStatus.FAILED.value)
-                chatDao.updateMessageContent(aiMessageId, it.message ?: "")
-                println("network error: $it")
-            }
-            .collect { chatStreamResponse ->
-                if (isFirstChunk) {
-                    chatDao.updateMessageStatus(aiMessageId, MessageStatus.GENERATING.value)
-                    isFirstChunk = false
-                }
-
-                chatStreamResponse.deltaContent?.let {
-                    accumulatedContent += it
-                    // 更新本地消息
-                    chatDao.updateMessageContent(
-                        aiMessageId,
-                        accumulatedContent
-                    )
-                }
-
-                chatStreamResponse.chatFinishReason?.let {
-                    if (it == ChatFinishReason.Stop) {
-                        chatDao.updateMessageStatus(aiMessageId, MessageStatus.STOPPED.value)
-                    } else {
-                        chatDao.updateMessageStatus(aiMessageId, MessageStatus.FAILED.value)
-                    }
-                }
-            }
+        executeSendMessageRequest(convId, aiMessageId)
     }
 
     override suspend fun toggleMessage(convId: Long, targetMessageId: Long) {
         chatDao.changeMessageVersionWith(convId, targetMessageId)
     }
 
-    override fun getConversationFlow(convId: Long): Flow<Conversation?> {
-        return chatDao.getConversationFlowById(convId)
-            .map { it?.let(ConversationEntity::asExternalModel) }
-    }
-
-    override fun getConversationWithPromptFlow(convId: Long): Flow<ConversationWithPromptInfo?> {
-        return chatDao.getConversationWithPromptFlow(convId)
-            .map { it?.asConversationWithPromptInfo() }
+    override suspend fun cancelReceiveMessage(convId: Long) {
+        val messageEntity = chatDao.getActiveMessageInConversation(convId)
+        messageEntity ?: return
+        chatDao.updateMessageStatus(messageEntity.id, MessageStatus.CANCELED.value)
     }
 
     override suspend fun createNewConversation(title: String, promptId: Long?): Long {
@@ -175,40 +168,15 @@ class DefaultChatRepository(
         chatDao.updateConversationTitle(id, newTitle)
     }
 
-    override suspend fun sendMessageWithStream(
-        convId: Long,
-        content: String,
-        prompt: String?
-    ) {
-        runCatching {
-            if (!chatDao.existConversation(convId)) {
-                throw IllegalStateException("要发送消息使用的会话ID不存在")
-            }
-
-            chatDao.continueMessage(
-                convId = convId,
-                sender = "user",
-                status = MessageStatus.NORMAL.value,
-                content = content,
-            )
-
-            executeSendMessageRequest(convId)
-        }
+    override suspend fun clearAllBubbleAndMessages(conversationId: Long) {
+        chatDao.clearAllBubble(conversationId)
     }
 
-    private suspend fun executeSendMessageRequest(convId: Long) {
-        //创建ai消息占位
-        val aiMessageId = chatDao.continueMessage(
-            convId = convId,
-            sender = "ai",
-            status = MessageStatus.LOADING.value,
-            content = ""
-        ).second
-
+    private suspend fun executeSendMessageRequest(convId: Long, responseMessageId: Long) {
         val historyMessages = chatDao.getCurrentVersionMessages(convId)
-            .filter {
-                it.status == MessageStatus.NORMAL.value ||
-                        it.status == MessageStatus.STOPPED.value
+            .filterNot {
+                it.status == MessageStatus.LOADING.value ||
+                        it.status == MessageStatus.FAILED.value
             }
             .map {
                 val sender = chatDao.getMessageSender(it.id) ?: ""
@@ -222,37 +190,33 @@ class DefaultChatRepository(
         var isFirstChunk = true
         remote.receiveResponseMessageWithFlow(historyMessages, prompt = convPrompt)
             .catch {
-                chatDao.updateMessageStatus(aiMessageId, MessageStatus.FAILED.value)
-                chatDao.updateMessageContent(aiMessageId, it.message ?: "")
-                println("network error: $it")
+                chatDao.updateMessageStatus(responseMessageId, MessageStatus.FAILED.value)
+                chatDao.updateMessageContent(responseMessageId, it.message ?: "")
+                println("network error: ")
+                it.printStackTrace()
             }
             .collect { chatStreamResponse ->
                 if (isFirstChunk) {
-                    chatDao.updateMessageStatus(aiMessageId, MessageStatus.GENERATING.value)
+                    chatDao.updateMessageStatus(responseMessageId, MessageStatus.GENERATING.value)
                     isFirstChunk = false
                 }
 
                 chatStreamResponse.deltaContent?.let {
                     accumulatedContent += it
-                    // 更新本地消息
+                    //Update local message
                     chatDao.updateMessageContent(
-                        aiMessageId,
+                        responseMessageId,
                         accumulatedContent
                     )
                 }
 
                 chatStreamResponse.chatFinishReason?.let {
                     if (it == ChatFinishReason.Stop) {
-                        chatDao.updateMessageStatus(aiMessageId, MessageStatus.STOPPED.value)
+                        chatDao.updateMessageStatus(responseMessageId, MessageStatus.STOPPED.value)
                     } else {
-                        chatDao.updateMessageStatus(aiMessageId, MessageStatus.FAILED.value)
+                        chatDao.updateMessageStatus(responseMessageId, MessageStatus.FAILED.value)
                     }
                 }
             }
-    }
-
-
-    override suspend fun clearAllBubbleAndMessages(conversationId: Long) {
-        chatDao.clearAllBubble(conversationId)
     }
 }

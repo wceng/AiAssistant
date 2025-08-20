@@ -1,5 +1,6 @@
 package com.wceng.app.aiassistant.domain.usecase
 
+import com.wceng.app.aiassistant.R
 import com.wceng.app.aiassistant.data.ChatRepository
 import com.wceng.app.aiassistant.domain.model.Conversation
 import com.wceng.app.aiassistant.domain.model.ConversationGroup
@@ -29,7 +30,6 @@ class GetGroupedConversationsUseCase(
         val last30DaysConversations = mutableListOf<Conversation>()
         val otherConversations = mutableListOf<Conversation>()
 
-        // 按日期分组
         conversations.sortedByDescending { it.lastUpdatedTime }.forEach { conv ->
             val convDate = conv.lastUpdatedTime.toLocalDateTime(TimeZone.currentSystemDefault()).date
             val daysBetween = today.daysUntil(convDate)
@@ -42,33 +42,44 @@ class GetGroupedConversationsUseCase(
             }
         }
 
-        // 按年月分组其他会话
-        val byYearMonth = otherConversations
-            .groupBy { conv ->
-                val date = conv.lastUpdatedTime.toLocalDateTime(TimeZone.currentSystemDefault())
-                "${date.year}年${date.monthNumber}月"
-            }
-            .map { (title, convs) ->
-                ConversationGroup(title, convs)
-            }
-            .sortedByDescending { group ->
-                group.conversations.maxOfOrNull { it.lastUpdatedTime } ?: Instant.DISTANT_PAST
-            }
-
-        // 构建最终分组列表
         val result = mutableListOf<ConversationGroup>()
 
         if (todayConversations.isNotEmpty()) {
-            result.add(ConversationGroup("今天", todayConversations))
+            result.add(ConversationGroup.SimpleGroup(
+                titleRes = R.string.group_today,
+                conversations = todayConversations
+            ))
         }
         if (last7DaysConversations.isNotEmpty()) {
-            result.add(ConversationGroup("过去7天", last7DaysConversations))
+            result.add(ConversationGroup.SimpleGroup(
+                titleRes = R.string.group_last_7_days,
+                conversations = last7DaysConversations
+            ))
         }
         if (last30DaysConversations.isNotEmpty()) {
-            result.add(ConversationGroup("过去30天", last30DaysConversations))
+            result.add(ConversationGroup.SimpleGroup(
+                titleRes = R.string.group_last_30_days,
+                conversations = last30DaysConversations
+            ))
         }
 
-        result.addAll(byYearMonth)
+        otherConversations
+            .groupBy { conv ->
+                conv.lastUpdatedTime.toLocalDateTime(TimeZone.currentSystemDefault()).run {
+                    Pair(year, monthNumber)
+                }
+            }
+            .entries
+            .sortedByDescending { (_, convs) ->
+                convs.maxOfOrNull { it.lastUpdatedTime } ?: Instant.DISTANT_PAST
+            }
+            .forEach { (yearMonth, convs) ->
+                result.add(ConversationGroup.YearMonthGroup(
+                    year = yearMonth.first,
+                    month = yearMonth.second,
+                    conversations = convs
+                ))
+            }
 
         return result
     }

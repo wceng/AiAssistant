@@ -76,7 +76,7 @@ class OpenAIChatApi(
         println("Request: model: ${request.model} historyNumber: ${request.messages.size} messages: ${request.messages.map { it.content }}")
 
         return openAI.chatCompletions(request).map { chunk ->
-            val content = chunk.choices[0].delta?.content
+            val content = chunk.choices.firstOrNull()?.delta?.content
             val finishReason = chunk.choices.firstOrNull()?.finishReason
             ChatStreamResponse(content, finishReason?.asChatFinishReason())
         }

@@ -8,7 +8,8 @@ enum class MessageStatus(val value: Int) {
     LOADING(1),
     FAILED(2),
     STOPPED(3),
-    GENERATING(4);
+    GENERATING(4),
+    CANCELED(5);
 
     companion object {
         fun fromInt(value: Int) = entries.first { it.value == value }

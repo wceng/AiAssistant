@@ -12,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
@@ -22,8 +23,12 @@ interface UserSettingsRepository {
     suspend fun setSelectedAiProviderSelectedModel(model: String)
     suspend fun setSelectedAiProviderApiKey(apiKey: String)
     suspend fun setSelectedAiProviderBaseUrl(baseUrl: String)
-    suspend fun updateAiProviderInfo(aiProviderInfo: AiProviderInfo)
-    suspend fun refreshModels(): Boolean
+    suspend fun setSelectedAiProviderModels(models: List<String>)
+    suspend fun addSelectedAiProviderModel(model: String)
+    suspend fun deleteSelectedAiProviderModel(model: String)
+    suspend fun setAiProviderInfo(aiProviderInfo: AiProviderInfo)
+    suspend fun addAiProviderInfo(aiProviderInfoName: String)
+    suspend fun refreshSelectedAiProviderModels(): Boolean
     suspend fun setThemeScheme(themeSchemeInfo: ThemeSchemeInfo)
     suspend fun setDarkModel(darkModeInfo: DarkModeInfo)
 }
@@ -64,9 +69,45 @@ class DefaultUserSettingsRepository(
         userSettingsDataSource.setSelectedAiProviderBaseUrl(baseUrl)
     }
 
+    override suspend fun setSelectedAiProviderModels(models: List<String>) {
+        userSettingsDataSource.setSelectedAiProviderModels(models)
+    }
 
-    override suspend fun updateAiProviderInfo(aiProviderInfo: AiProviderInfo) {
-        userSettingsDataSource.updateAiProvider(aiProviderInfo)
+    override suspend fun addSelectedAiProviderModel(model: String) {
+        val newModels = userSettingsDataSource.useSetting.first()
+            .aiProviderConfigInfo
+            .selectedAiProviderInfo
+            .models
+            .toMutableList()
+        newModels.add(model)
+
+        userSettingsDataSource.setSelectedAiProviderModels(newModels)
+    }
+
+    override suspend fun deleteSelectedAiProviderModel(model: String) {
+        val newModels = userSettingsDataSource.useSetting.first()
+            .aiProviderConfigInfo
+            .selectedAiProviderInfo
+            .models
+            .toMutableList()
+        newModels.remove(model)
+
+        userSettingsDataSource.setSelectedAiProviderModels(newModels)
+    }
+
+    override suspend fun setAiProviderInfo(aiProviderInfo: AiProviderInfo) {
+        userSettingsDataSource.setAiProvider(aiProviderInfo)
+    }
+
+    override suspend fun addAiProviderInfo(aiProviderInfoName: String) {
+        val aiProviderInfo = AiProviderInfo(
+            name = aiProviderInfoName,
+            apiKey = "",
+            baseUrl = "",
+            models = listOf(),
+            selectedModel = ""
+        )
+        setAiProviderInfo(aiProviderInfo)
     }
 
     override suspend fun setThemeScheme(themeSchemeInfo: ThemeSchemeInfo) {
@@ -77,8 +118,22 @@ class DefaultUserSettingsRepository(
         userSettingsDataSource.setDarkModel(darkModeInfo)
     }
 
-
-    override suspend fun refreshModels(): Boolean {
-        TODO()
+    override suspend fun refreshSelectedAiProviderModels(): Boolean {
+        chatApi.listModes().onSuccess {
+            val newModelsList = userSettingsDataSource
+                .useSetting
+                .first()
+                .aiProviderConfigInfo
+                .selectedAiProviderInfo
+                .models
+                .toMutableList()
+            newModelsList.addAll(it)
+            userSettingsDataSource.setSelectedAiProviderModels(newModelsList.distinct())
+            return true
+        }
+            .onFailure {
+                return false
+            }
+        return false
     }
 }

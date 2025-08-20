@@ -31,9 +31,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.wceng.app.aiassistant.R
 import com.wceng.app.aiassistant.domain.model.Prompt
 import com.wceng.app.aiassistant.util.ErrorContent
 import com.wceng.app.aiassistant.util.LoadingContent
@@ -109,7 +111,7 @@ fun PromptContent(
                                     selectedPrompt = null // 关闭面板
                                 }
                             ) {
-                                Text("开始对话")
+                                Text(stringResource(R.string.start_conversation))
                             }
                         }
                     }

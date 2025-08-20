@@ -47,3 +47,24 @@ fun ComponentActivity.isSystemInDarkTheme() = callbackFlow {
 }
     .distinctUntilChanged()
     .conflate()
+
+
+/**
+ * Registers listener for configuration changes to retrieve current locale.
+ * Immediately upon subscribing, it sends the current value and then registers listener for changes.
+ */
+fun ComponentActivity.currentAppLocale() = callbackFlow {
+    // 发送当前语言
+    channel.trySend(resources.configuration.locales[0])
+
+    val listener = Consumer<Configuration> { newConfig ->
+        // 发送新的语言配置
+        channel.trySend(newConfig.locales[0])
+    }
+
+    addOnConfigurationChangedListener(listener)
+
+    awaitClose { removeOnConfigurationChangedListener(listener) }
+}
+    .distinctUntilChanged { old, new -> old.language == new.language }
+    .conflate()
