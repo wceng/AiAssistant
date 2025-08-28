@@ -26,10 +26,10 @@ fun AiaTextFiled(
     trailingIcon: @Composable (() -> Unit)? = null,
 ) {
 
-    AiaTextFiled(
+    OutlinedTextField(
         modifier = modifier,
-        textFieldValue = TextFieldValue(text = value),
-        onValueChange = { onValueChange(it.text) },
+        value = value,
+        onValueChange = onValueChange,
         readOnly = readOnly,
         maxLines = maxLines,
         minLines = minLines,
@@ -38,8 +38,14 @@ fun AiaTextFiled(
         placeholder = placeholder,
         leadingIcon = leadingIcon,
         trailingIcon = trailingIcon,
+        colors = TextFieldDefaults.colors(
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent,
+            errorIndicatorColor = Color.Transparent,
+        ),
+        shape = RoundedCornerShape(32.dp)
     )
-
 }
 
 @Composable
