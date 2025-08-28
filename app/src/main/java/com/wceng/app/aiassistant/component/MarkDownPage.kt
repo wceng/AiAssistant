@@ -25,42 +25,41 @@ internal fun MarkDownPage(
     content: String,
     modifier: Modifier = Modifier,
 ) {
+    //TODO apply user setting theme preferences
     val isDarkTheme = isSystemInDarkTheme()
     val highlightsBuilder = remember(isDarkTheme) {
         Highlights.Builder().theme(SyntaxThemes.atom(darkMode = isDarkTheme))
     }
 
-    SelectionContainer {
-        Markdown(
-            markdownState = rememberMarkdownState(content, immediate = true),
-            components = markdownComponents(
-                codeBlock = {
-                    MarkdownHighlightedCodeBlock(
-                        content = it.content,
-                        node = it.node,
-                        highlights = highlightsBuilder
-                    )
-                },
-                codeFence = {
-                    MarkdownHighlightedCodeFence(
-                        content = it.content,
-                        node = it.node,
-                        highlights = highlightsBuilder
-                    )
-                },
-                checkbox = { MarkdownCheckBox(it.content, it.node, it.typography.text) }
-            ),
-            imageTransformer = Coil3ImageTransformerImpl,
-            extendedSpans = markdownExtendedSpans {
-                val animator = rememberSquigglyUnderlineAnimator()
-                remember {
-                    ExtendedSpans(
-                        RoundedCornerSpanPainter(),
-                        SquigglyUnderlineSpanPainter(animator = animator)
-                    )
-                }
+    Markdown(
+        markdownState = rememberMarkdownState(content, immediate = true),
+        components = markdownComponents(
+            codeBlock = {
+                MarkdownHighlightedCodeBlock(
+                    content = it.content,
+                    node = it.node,
+                    highlights = highlightsBuilder
+                )
             },
-            modifier = modifier
-        )
-    }
+            codeFence = {
+                MarkdownHighlightedCodeFence(
+                    content = it.content,
+                    node = it.node,
+                    highlights = highlightsBuilder
+                )
+            },
+            checkbox = { MarkdownCheckBox(it.content, it.node, it.typography.text) }
+        ),
+        imageTransformer = Coil3ImageTransformerImpl,
+        extendedSpans = markdownExtendedSpans {
+            val animator = rememberSquigglyUnderlineAnimator()
+            remember {
+                ExtendedSpans(
+                    RoundedCornerSpanPainter(),
+                    SquigglyUnderlineSpanPainter(animator = animator)
+                )
+            }
+        },
+        modifier = modifier
+    )
 }

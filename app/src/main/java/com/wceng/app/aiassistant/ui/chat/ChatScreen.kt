@@ -4,8 +4,6 @@ package com.wceng.app.aiassistant.ui.chat
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.animateScrollBy
-import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -66,7 +64,6 @@ import com.wceng.app.aiassistant.ui.theme.AiaSafeDp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.time.delay
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -122,7 +119,7 @@ fun ChatScreen(
     if (showEditConversationTitleDialog) {
         AiaTextFieldAlertDialog(
             title = stringResource(R.string.rename_conversation_title),
-            initialValue = chatUiState.sessionTitle,
+            initialValue = chatUiState.convTitle,
             onDismissRequest = { showEditConversationTitleDialog = false },
             confirmButtonText = stringResource(R.string.confirm),
             onConfirmAction = viewModel::renameCurrentConversationTitle,
@@ -173,9 +170,6 @@ fun ChatContent(
             && messagesUiState.bubbleToMessages.isNotEmpty()
         )
             coroutineScope.launch {
-//                lazyListState.scrollToRealBottom(true)
-//                lazyListState.animateScrollToItem(messagesUiState.bubbleToMessages.size)
-//                lazyListState.animateScrollBy(Int.MAX_VALUE.toFloat())
                 delayMs.takeIf { it > 0L }?.let { delay(it) }
                 lazyListState.animateScrollToItem(messagesUiState.bubbleToMessages.size + 1)
             }
@@ -189,7 +183,7 @@ fun ChatContent(
     Scaffold(
         topBar = {
             ChatTopAppBar(
-                title = chatUiState.sessionTitle,
+                title = chatUiState.convTitle,
                 onClearAll = messageActions.onClearAllMessages,
                 showBackButton = showBackButton,
                 onBack = onBack,
@@ -201,7 +195,7 @@ fun ChatContent(
         bottomBar = {
             MessageInput(
                 onSend = {
-                    messageActions.onSendMessage(it, chatUiState.prompt)
+                    messageActions.onSendMessage(it, chatUiState.convPrompt)
                     clearInputFocus()
                     scrollToBottom(100)
                 },
@@ -223,7 +217,8 @@ fun ChatContent(
             }
         },
         floatingActionButtonPosition = FabPosition.Center,
-        contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(WindowInsets.navigationBars)
+        contentWindowInsets = ScaffoldDefaults.contentWindowInsets
+            .exclude(WindowInsets.navigationBars)
             .exclude(WindowInsets.ime),
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
     ) { paddingValues ->
@@ -244,7 +239,7 @@ fun ChatContent(
                             userScrollEnabled = true,
                             contentPadding = PaddingValues(horizontal = AiaSafeDp.safeHorizontal),
                         ) {
-                            chatUiState.prompt?.let(::prompt)
+                            chatUiState.convPrompt.let(::prompt)
 
                             messageList(
                                 bubbleToMessages = messagesUiState.bubbleToMessages,
@@ -259,10 +254,8 @@ fun ChatContent(
         }
     }
 
-    if (messagesUiState is MessagesUiState.Success) {
-        LaunchedEffect(Unit) {
-            scrollToBottom()
-        }
+    LaunchedEffect(chatUiState.convId) {
+        scrollToBottom()
     }
 }
 
@@ -365,23 +358,6 @@ private fun MessageItem(
                     onToggleMessage = onToggleMessage,
                 )
             }
-        }
-    }
-}
-
-suspend fun LazyListState.scrollToRealBottom(animatable: Boolean = false) {
-    val lastItem = layoutInfo.totalItemsCount - 1
-    if (lastItem >= 0) {
-        if (animatable) animateScrollToItem(lastItem)
-        else scrollToItem(lastItem)
-        val viewportHeight = layoutInfo.viewportEndOffset
-        val lastItemBottom = layoutInfo.visibleItemsInfo.lastOrNull()?.offset?.let {
-            it + layoutInfo.visibleItemsInfo.last().size
-        } ?: 0
-        val extraScroll = lastItemBottom - viewportHeight
-        if (extraScroll > 0) {
-            if (animatable) animateScrollBy(extraScroll.toFloat())
-            else scrollBy(extraScroll.toFloat())
         }
     }
 }

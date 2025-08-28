@@ -73,7 +73,7 @@ class OpenAIChatApi(
         val openAI = openAiProvider.getInstant()
         val request = buildRequest(history, prompt)
 
-        println("Request: model: ${request.model} historyNumber: ${request.messages.size} messages: ${request.messages.map { it.content }}")
+//        println("Request: model: ${request.model} historyNumber: ${request.messages.size} messages: ${request.messages.map { it.content }}")
 
         return openAI.chatCompletions(request).map { chunk ->
             val content = chunk.choices.firstOrNull()?.delta?.content

@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.wceng.app.aiassistant.data.ChatRepository
 import com.wceng.app.aiassistant.domain.model.BubbleToMessages
+import com.wceng.app.aiassistant.domain.model.ConversationWithPromptInfo
 import com.wceng.app.aiassistant.ui.ChatRoute
 import com.wceng.app.aiassistant.util.Constant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -66,8 +67,7 @@ class ChatViewModel(
             _currentSession, _isReceiving
         ) { currentSession, isReceiving ->
             ChatUiState(
-                sessionTitle = currentSession?.conversation?.title ?: "",
-                prompt = currentSession?.prompt?.prompt ?: Constant.DEFAULT_PROMPT,
+                currentConversation = currentSession,
                 isReceiving = isReceiving,
             )
         }
@@ -169,7 +169,12 @@ sealed interface MessagesUiState {
 
 @Immutable
 data class ChatUiState(
-    val sessionTitle: String = "",
-    val prompt: String? = null,
+    val currentConversation: ConversationWithPromptInfo? = null,
     val isReceiving: Boolean = false,
-)
+) {
+    val convTitle = currentConversation?.conversation?.title ?: ""
+
+    val convPrompt = currentConversation?.prompt?.prompt ?: Constant.DEFAULT_PROMPT
+
+    val convId = currentConversation?.conversation?.id
+}

@@ -58,8 +58,8 @@ internal fun UserMessageBubble(
             Surface(
                 modifier = modifier,
                 shape = userBubbleShape,
-                color = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
+                color = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
             ) {
                 SelectionContainer {
                     Text(
