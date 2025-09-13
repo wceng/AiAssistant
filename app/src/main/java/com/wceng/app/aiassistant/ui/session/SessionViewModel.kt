@@ -101,10 +101,6 @@ class SessionViewModel(
         _onOpenConversationId.value = null
     }
 
-    fun updateSessionTitle(convId: Long, title: String) = viewModelScope.launch {
-        chatRepository.updateConversationTitle(convId, title)
-    }
-
     fun enableSelectionMode() {
         _selectionMode.value = true
     }

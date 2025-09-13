@@ -9,6 +9,7 @@ import kotlinx.datetime.Instant
 data class Conversation(
     val id: Long = 0,
     val title: String = "",
+//    val titleSource: ConversationTitleSource = ConversationTitleSource.Default,
     val createTime: Instant = Clock.System.now(),
     val lastUpdatedTime: Instant = createTime
 )

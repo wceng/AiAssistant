@@ -12,7 +12,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -36,7 +35,7 @@ fun AiaTextFieldAlertDialog(
     maxLines: Int = if (singleLine) 1 else Int.MAX_VALUE,
     minLines: Int = 1,
 ) {
-    var textFieldValue by remember (initialValue) {
+    var textFieldValue by remember(initialValue) {
         mutableStateOf(
             TextFieldValue(
                 text = initialValue,
@@ -97,7 +96,9 @@ fun AiaMessageConfirmAlertDialog(
     onDismissRequest: () -> Unit,
     onConfirmAction: () -> Unit,
     text: String? = null,
-    icon: ImageVector? = null
+    icon: ImageVector? = null,
+    confirmButtonText: String = stringResource(R.string.confirm),
+    dismissButtonText: String = stringResource(R.string.cancel)
 ) {
     AlertDialog(
         title = {
@@ -105,16 +106,13 @@ fun AiaMessageConfirmAlertDialog(
         },
         onDismissRequest = onDismissRequest,
         confirmButton = {
-            TextButton(onClick = {
-                onConfirmAction()
-                onDismissRequest()
-            }) {
-                Text(text = stringResource(R.string.confirm))
+            TextButton(onClick = { onConfirmAction(); onDismissRequest() }) {
+                Text(text = confirmButtonText)
             }
         },
         dismissButton = {
             TextButton(onClick = { onDismissRequest() }) {
-                Text(text = stringResource(R.string.cancel))
+                Text(text = dismissButtonText)
             }
         },
         text = text?.let { { Text(it) } },

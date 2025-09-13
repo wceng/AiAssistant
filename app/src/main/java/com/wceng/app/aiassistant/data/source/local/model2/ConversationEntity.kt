@@ -22,6 +22,9 @@ data class ConversationEntity constructor(
 
     val title: String,
 
+    @ColumnInfo(name = "title_source")
+    val titleSource: Int = 0, //default
+
     @ColumnInfo(name = "create_time")
     val createTime: Instant = Clock.System.now(),
 
@@ -32,3 +35,12 @@ data class ConversationEntity constructor(
     val lastUpdatedTime: Instant = createTime
 )
 
+enum class ConversationTitleSource(val value: Int) {
+    Default(0),
+    User(1),
+    Ai(2);
+
+    companion object {
+        fun fromInt(value: Int) = ConversationTitleSource.entries.first { it.value == value }
+    }
+}

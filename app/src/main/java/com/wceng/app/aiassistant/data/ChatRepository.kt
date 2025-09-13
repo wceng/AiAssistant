@@ -3,6 +3,7 @@ package com.wceng.app.aiassistant.data
 import com.wceng.app.aiassistant.data.source.local.dao2.ChatDao
 import com.wceng.app.aiassistant.data.source.local.dao2.PromptDao
 import com.wceng.app.aiassistant.data.source.local.model2.ConversationEntity
+import com.wceng.app.aiassistant.data.source.local.model2.ConversationTitleSource
 import com.wceng.app.aiassistant.data.source.remote.ChatApi
 import com.wceng.app.aiassistant.data.source.remote.model.ChatFinishReason
 import com.wceng.app.aiassistant.data.source.remote.model.asNetwork
@@ -32,7 +33,12 @@ interface ChatRepository {
     suspend fun deleteConversation(id: Long)
     suspend fun deleteConversations(ids: Set<Long>)
     suspend fun getConversation(id: Long): Conversation?
-    suspend fun updateConversationTitle(id: Long, newTitle: String)
+    suspend fun updateConversationTitle(
+        id: Long,
+        newTitle: String,
+        titleSource: ConversationTitleSource
+    )
+
     suspend fun sendMessage(convId: Long, content: String, prompt: String? = null)
     suspend fun clearAllBubbleAndMessages(conversationId: Long)
     suspend fun retrySendUserMessage(
@@ -105,6 +111,10 @@ class DefaultChatRepository(
             ).second
 
             executeSendMessageRequest(convId, aiMessageId)
+
+            if (chatDao.getConversationTitleSource(convId) == ConversationTitleSource.Default.value) {
+                chatDao.updateConversationTitle(convId, content, ConversationTitleSource.Ai.value)
+            }
         }
     }
 
@@ -169,8 +179,12 @@ class DefaultChatRepository(
     override suspend fun getConversation(id: Long): Conversation? =
         chatDao.getConversationById(id)?.asExternalModel()
 
-    override suspend fun updateConversationTitle(id: Long, newTitle: String) {
-        chatDao.updateConversationTitle(id, newTitle)
+    override suspend fun updateConversationTitle(
+        id: Long,
+        newTitle: String,
+        titleSource: ConversationTitleSource
+    ) {
+        chatDao.updateConversationTitle(id, newTitle, titleSource.value)
     }
 
     override suspend fun clearAllBubbleAndMessages(conversationId: Long) {
@@ -197,8 +211,7 @@ class DefaultChatRepository(
             .catch {
                 chatDao.updateMessageStatus(responseMessageId, MessageStatus.FAILED.value)
                 chatDao.updateMessageContent(responseMessageId, it.message ?: "")
-                println("network error: ")
-                it.printStackTrace()
+                println("network error: ${it.printStackTrace()}")
             }
             .collect { chatStreamResponse ->
                 if (isFirstChunk) {

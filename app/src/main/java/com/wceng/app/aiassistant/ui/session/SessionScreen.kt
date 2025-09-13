@@ -69,7 +69,6 @@ fun SessionScreen(
                 viewModel.setSelectedConversation(it)
                 viewModel.openConversation(it)
             },
-            onUpdateSessionTitle = viewModel::updateSessionTitle,
             onDisableSelectionMode = viewModel::disableSelectionMode,
             onDeleteSelectedConversation = {
                 showDeleteSelectedConversationsDialog = true
@@ -107,7 +106,6 @@ fun SessionScreen(
 data class SessionActions(
     val onCreateNew: () -> Unit = {},
     val onSelectSession: (id: Long) -> Unit = {},
-    val onUpdateSessionTitle: (Long, String) -> Unit = { _, _ -> },
     val onDisableSelectionMode: () -> Unit = {},
     val onDeleteSelectedConversation: () -> Unit = {},
     val onToggleSelectedItem: (Long, Boolean) -> Unit = { _, _ -> },

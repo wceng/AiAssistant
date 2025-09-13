@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.wceng.app.aiassistant.data.ChatRepository
+import com.wceng.app.aiassistant.data.source.local.model2.ConversationTitleSource
 import com.wceng.app.aiassistant.domain.model.BubbleToMessages
 import com.wceng.app.aiassistant.domain.model.ConversationWithPromptInfo
 import com.wceng.app.aiassistant.ui.ChatRoute
@@ -155,7 +156,7 @@ class ChatViewModel(
     fun renameCurrentConversationTitle(newTitle: String) {
         convId ?: return
         viewModelScope.launch {
-            chatRepository.updateConversationTitle(convId, newTitle)
+            chatRepository.updateConversationTitle(convId, newTitle, ConversationTitleSource.User)
         }
     }
 }

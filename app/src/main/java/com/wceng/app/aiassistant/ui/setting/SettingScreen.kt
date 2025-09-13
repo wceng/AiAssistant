@@ -2,6 +2,12 @@
 
 package com.wceng.app.aiassistant.ui.setting
 
+import android.content.Context
+import android.content.Intent
+import android.os.PowerManager
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -9,6 +15,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -32,18 +39,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import com.wceng.app.aiassistant.R
 import com.wceng.app.aiassistant.component.AiaLargeTopBar
+import com.wceng.app.aiassistant.component.AiaMessageConfirmAlertDialog
 import com.wceng.app.aiassistant.ui.DevicePreview
 import com.wceng.app.aiassistant.ui.theme.AiaImages
 import com.wceng.app.aiassistant.ui.theme.AiaSafeDp
@@ -59,6 +68,9 @@ fun SettingScreen(
 //    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val uriHandler = LocalUriHandler.current
+    val context = LocalContext.current
+    val powerManager =
+        context.getSystemService(Context.POWER_SERVICE) as PowerManager
 
     var showColorSchemeBottomSheet by remember {
         mutableStateOf(false)
@@ -67,6 +79,23 @@ fun SettingScreen(
     var showLanguageBottomSheet by remember {
         mutableStateOf(false)
     }
+
+    var showBatteryOptimizationDialog by remember {
+        mutableStateOf(false)
+    }
+
+    var isBatteryOptimizationIgnored by remember {
+        mutableStateOf(
+            powerManager.isIgnoringBatteryOptimizations(context.packageName)
+        )
+    }
+
+    val launcher =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            isBatteryOptimizationIgnored =
+                powerManager.isIgnoringBatteryOptimizations(context.packageName)
+        }
+
 
     SettingContent(
         modifier = modifier,
@@ -86,8 +115,12 @@ fun SettingScreen(
             onClickGithub = {
                 uriHandler.openUri(Constant.GITHUB_LINK)
             },
-            onClickFeedback = {}
-        )
+            onClickFeedback = {},
+            onClickBatteryOptimization = {
+                showBatteryOptimizationDialog = true
+            }
+        ),
+        showBatteryOptimizationHint = isBatteryOptimizationIgnored.not()
     )
 
     ColorSchemeBottomSheet(
@@ -101,6 +134,24 @@ fun SettingScreen(
             showLanguageBottomSheet = false
         },
     )
+
+    if (showBatteryOptimizationDialog) {
+        AiaMessageConfirmAlertDialog(
+            title = stringResource(R.string.battery_optimization_title),
+            onDismissRequest = {
+                showBatteryOptimizationDialog = false
+            },
+            onConfirmAction = {
+                val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                    data = "package:${context.packageName}".toUri()
+                }
+                launcher.launch(intent)
+            },
+            text = stringResource(R.string.battery_optimization_message),
+            confirmButtonText = stringResource(R.string.battery_optimization_go_to_settings),
+            dismissButtonText = stringResource(R.string.battery_optimization_later)
+        )
+    }
 }
 
 data class SettingActions(
@@ -112,12 +163,15 @@ data class SettingActions(
     val onClickLicense: () -> Unit,
     val onClickGithub: () -> Unit,
     val onClickFeedback: () -> Unit,
+    val onClickBatteryOptimization: () -> Unit,
 )
+
 
 @Composable
 private fun SettingContent(
     modifier: Modifier = Modifier,
-    settingActions: SettingActions
+    settingActions: SettingActions,
+    showBatteryOptimizationHint: Boolean = false
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
@@ -138,6 +192,12 @@ private fun SettingContent(
                 .padding(horizontal = AiaSafeDp.safeHorizontal),
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
+            if (showBatteryOptimizationHint) {
+                BatteryOptimizationHintItem(
+                    onClick = settingActions.onClickBatteryOptimization
+                )
+            }
+
             SettingItemPanel(
                 title = stringResource(R.string.service_provider),
             ) {
@@ -204,6 +264,39 @@ private fun SettingContent(
         }
     }
 }
+
+@Composable
+fun BatteryOptimizationHintItem(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .clip(MaterialTheme.shapes.medium)
+            .clickable(onClick = onClick)
+            .fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        contentColor = MaterialTheme.colorScheme.onSurface
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.battery_optimization_important),
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.battery_optimization_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
+            )
+        }
+    }
+}
+
 
 @Composable
 fun SettingItemPanel(
@@ -300,7 +393,8 @@ private fun SettingContentPreview() {
                 onClickVersion = {},
                 onClickLicense = {},
                 onClickGithub = {},
-                onClickFeedback = {}
+                onClickFeedback = {},
+                onClickBatteryOptimization = {}
             )
         )
     }

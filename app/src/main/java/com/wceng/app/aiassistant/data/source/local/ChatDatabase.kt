@@ -19,7 +19,9 @@ import com.wceng.app.aiassistant.data.source.local.model2.PromptEntity
         MessageVersionEntity::class,
         PromptEntity::class
     ],
-    version = 5,
+    version = 6,
+    autoMigrations = [
+    ],
     exportSchema = true
 )
 @TypeConverters(DateConverter::class)

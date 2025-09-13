@@ -67,4 +67,10 @@
     <string name="delete_selected_conversations_message">Are you sure you want to delete the selected conversations? This action cannot be undone.</string>
     <string name="close">Close</string>
     <string name="count_selected">%d selected</string>
+    <string name="battery_optimization_title">Battery Optimization</string>
+    <string name="battery_optimization_message">To ensure AI responses are not interrupted in the background, please add the app to the battery optimization whitelist. This prevents the system from restricting background network activity.</string>
+    <string name="battery_optimization_go_to_settings">Go to Settings</string>
+    <string name="battery_optimization_later">Later</string>
+    <string name="battery_optimization_important">Important Notice</string>
+    <string name="battery_optimization_hint">Tap to configure battery optimization and ensure AI responses won\'t be interrupted</string>
 </resources>

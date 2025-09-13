@@ -32,8 +32,15 @@ interface ChatDao {
     @Query("select * from conversation where id = :conversationId")
     fun getConversationFlowById(conversationId: Long): Flow<ConversationEntity?>
 
-    @Query("update conversation set title = :newTitle where id = :conversationId")
-    suspend fun updateConversationTitle(conversationId: Long, newTitle: String)
+    @Query("update conversation set title = :newTitle,title_source = :titleSource where id = :conversationId")
+    suspend fun updateConversationTitle(
+        conversationId: Long,
+        newTitle: String,
+        titleSource: Int = 0
+    )
+
+    @Query("select conversation.title_source from conversation where id = :conversationId")
+    suspend fun getConversationTitleSource(conversationId: Long): Int
 
     @Query("SELECT EXISTS(SELECT 1 FROM conversation WHERE id = :convId)")
     suspend fun existConversation(convId: Long): Boolean

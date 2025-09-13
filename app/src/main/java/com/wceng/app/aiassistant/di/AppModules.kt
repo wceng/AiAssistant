@@ -13,6 +13,7 @@ import com.wceng.app.aiassistant.data.UserSettingsRepository
 import com.wceng.app.aiassistant.data.source.datastore.UserPreferencesSerializer
 import com.wceng.app.aiassistant.data.source.datastore.UserSettingsDataSource
 import com.wceng.app.aiassistant.data.source.local.ChatDatabase
+import com.wceng.app.aiassistant.data.source.local.Migrations
 import com.wceng.app.aiassistant.data.source.local.dao2.ChatDao
 import com.wceng.app.aiassistant.data.source.local.dao2.PromptDao
 import com.wceng.app.aiassistant.data.source.remote.ChatApi
@@ -51,8 +52,8 @@ val dataModule = module {
             klass = ChatDatabase::class.java,
             name = "chat_db"
         )
-            .fallbackToDestructiveMigration(true)
             .setQueryCoroutineContext(Dispatchers.IO)
+            .addMigrations(Migrations.MIGRATION_5_6) // 添加手动迁移
             .build()
     }
     single<ChatDao> { get<ChatDatabase>().chatDao() }

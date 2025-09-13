@@ -67,4 +67,11 @@
     <string name="delete_selected_conversations_message">你确定要删除所选会话吗？此操作不可逆。</string>
     <string name="close">关闭</string>
     <string name="count_selected">选中 %d 个</string>
+    <string name="battery_optimization_title">电池优化</string>
+    <string name="battery_optimization_message">为了确保AI回复不会在后台被中断，请将应用加入电池优化白名单。这可以防止系统限制后台网络活动。</string>
+    <string name="battery_optimization_go_to_settings">去设置</string>
+    <string name="battery_optimization_later">稍后再说</string>
+    <string name="battery_optimization_important">重要提示</string>
+    <string name="battery_optimization_hint">点击配置电池优化，确保AI回复不会被中断</string>
+
 </resources>
