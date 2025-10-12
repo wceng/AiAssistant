@@ -37,7 +37,7 @@ data object SettingLicenseRoute
 @Composable
 fun AiaNav(
     appState: AiaAppState,
-    onHideTopBarAndBottomNavBar: (Boolean) -> Unit,
+    onHideBottomNavBar: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val navController = appState.navController
@@ -49,7 +49,7 @@ fun AiaNav(
     ) {
         composable<ConversationsRoute> {
             Conversation2Panel(
-                onHideTopBarAndBottomNavBar = onHideTopBarAndBottomNavBar
+                onHideBottomNavBar = onHideBottomNavBar
             )
         }
 

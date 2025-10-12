@@ -16,7 +16,7 @@ class GetGroupedConversationsUseCase(
     private val chatRepository: ChatRepository
 ) {
     operator fun invoke(): Flow<List<ConversationGroup>> {
-        return chatRepository.getLatestConversations()
+        return chatRepository.getMostActiveConversations()
             .map { conversations ->
                 groupConversations(conversations)
             }

@@ -108,7 +108,8 @@ internal fun AssistantMessageBubble(
         ) {
             Surface(
                 shape = aiBubbleShape,
-                color = MaterialTheme.colorScheme.surfaceVariant,
+//                color = MaterialTheme.colorScheme.surfaceVariant,
+                color = MaterialTheme.colorScheme.surfaceContainerLowest,
             ) {
                 SelectionContainer {
                     Box(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {

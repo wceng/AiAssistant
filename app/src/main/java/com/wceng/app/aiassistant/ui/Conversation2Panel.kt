@@ -38,14 +38,14 @@ data class ChatRoute(
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun Conversation2Panel(
-    onHideTopBarAndBottomNavBar: (Boolean) -> Unit
+    onHideBottomNavBar: (Boolean) -> Unit
 ) {
     val scaffoldNavigator: ThreePaneScaffoldNavigator<Any> =
         rememberListDetailPaneScaffoldNavigator<Any>()
 
     val scope = rememberCoroutineScope()
 
-    val currentOnHideTopBarAndBottomNavBar by rememberUpdatedState(onHideTopBarAndBottomNavBar)
+    val currentOnHideBottomNavBar by rememberUpdatedState(onHideBottomNavBar)
 
     var chatRoute by remember { mutableStateOf(ChatRoute()) }
 
@@ -63,15 +63,14 @@ fun Conversation2Panel(
     fun checkShouldHide() {
         LaunchedEffect(scaffoldNavigator.currentDestination) {
             if (!scaffoldNavigator.isListPaneVisible()) {
-                currentOnHideTopBarAndBottomNavBar(true)
+                currentOnHideBottomNavBar(true)
                 Log.d(TAG, "ConversationWithChatPanel: need hide topbar")
             } else if (!scaffoldNavigator.isDetailPaneVisible()) {
-                currentOnHideTopBarAndBottomNavBar(false)
+                currentOnHideBottomNavBar(false)
                 Log.d(TAG, "ConversationWithChatPanel: not need hide topbar")
             }
         }
     }
-
 
     //TODO:add back handel on 2panel device
     fun onConversationClickShowDetailPanel(convId: Long) {
@@ -93,8 +92,8 @@ fun Conversation2Panel(
                     onSelectSession = ::onConversationClickShowDetailPanel,
                     highlightSelectedConversation = scaffoldNavigator.isDetailPaneVisible()
                 )
-                checkShouldHide()
             }
+            checkShouldHide()
         },
         detailPane = {
             AnimatedPane {

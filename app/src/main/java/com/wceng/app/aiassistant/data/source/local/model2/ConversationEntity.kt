@@ -38,7 +38,8 @@ data class ConversationEntity constructor(
 enum class ConversationTitleSource(val value: Int) {
     Default(0),
     User(1),
-    Ai(2);
+    Ai(2),
+    Prompt(3);
 
     companion object {
         fun fromInt(value: Int) = ConversationTitleSource.entries.first { it.value == value }

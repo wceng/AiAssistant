@@ -12,6 +12,7 @@ import com.wceng.app.aiassistant.data.source.local.model2.ConversationWithPrompt
 import com.wceng.app.aiassistant.data.source.local.model2.MessageEntity
 import com.wceng.app.aiassistant.data.source.local.model2.MessageVersionEntity
 import kotlinx.coroutines.flow.Flow
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 
 @Dao
@@ -59,7 +60,10 @@ interface ChatDao {
     ORDER BY conversation.last_updated_time DESC
 """
     )
-    fun getLatestConversations(): Flow<List<ConversationEntity>>
+    fun getConversationsByLastUpdated(): Flow<List<ConversationEntity>>
+
+    @Query("UPDATE conversation SET last_updated_time = :updateTime WHERE id = :conversationId")
+    suspend fun updateConversationTime(conversationId: Long, updateTime: Instant = Clock.System.now())
 
     @Transaction
     @Query(

@@ -4,17 +4,15 @@ import androidx.compose.runtime.Immutable
 
 @Immutable
 data class ChatConfig(
-    val apiKey: String,
-    val baseUrl: String,
-    val model: String,
+    val apiKey: String = "",
+    val baseUrl: String = "",
+    val model: String = "",
 )
 
-fun UserSettingInfo.asChatConfig(): ChatConfig {
-    val selectedAiProviderInfo = aiProviderConfigInfo.selectedAiProviderInfo
-
+fun AiProviderInfo.asChatConfig(): ChatConfig {
     return ChatConfig(
-        apiKey = selectedAiProviderInfo.apiKey,
-        baseUrl = selectedAiProviderInfo.baseUrl,
-        model = selectedAiProviderInfo.selectedModel,
+        apiKey = apiKey ?: "",
+        baseUrl = baseUrl ?: "",
+        model = selectedModel ?: "",
     )
 }

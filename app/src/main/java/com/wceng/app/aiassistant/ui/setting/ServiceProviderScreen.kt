@@ -62,8 +62,8 @@ import com.wceng.app.aiassistant.component.AiaCircularProgressIndicator
 import com.wceng.app.aiassistant.component.AiaMessageConfirmAlertDialog
 import com.wceng.app.aiassistant.component.AiaTextFieldAlertDialog
 import com.wceng.app.aiassistant.component.LoadingContent
-import com.wceng.app.aiassistant.domain.model.AiProviderInfo
-import com.wceng.app.aiassistant.domain.model.DEFAULT_AI_PROVIDER_CONFIG_INFO
+import com.wceng.app.aiassistant.domain.model.SelectableAiProviderModel
+import com.wceng.app.aiassistant.domain.model.defaultAiProviders
 import com.wceng.app.aiassistant.ui.theme.AiAssistantTheme
 import com.wceng.app.aiassistant.ui.theme.AiaImages
 import com.wceng.app.aiassistant.ui.theme.AiaSafeDp
@@ -101,14 +101,14 @@ data class ServiceProviderActions(
     val onUpdateApiKey: (String) -> Unit,
     val onToggleApiKeyVisibility: () -> Unit,
     val onUpdateBaseUrl: (String) -> Unit,
-    val onSetSelectedProvider: (String) -> Unit,
+    val onSetSelectedProvider: (Long) -> Unit,
     val onUpdateSelectedModel: (String) -> Unit,
     val onRefreshModels: () -> Unit,
     val onAddModel: (String) -> Unit,
     val onDeleteModel: (String) -> Unit,
     val onAddCustomServiceProvider: (String) -> Unit,
-    val onResetHostUrl: (String) -> Unit,
-    val onDeleteServiceProvider: (String) -> Unit
+    val onResetHostUrl: (Long) -> Unit,
+    val onDeleteServiceProvider: (Long) -> Unit
 )
 
 @Composable
@@ -155,7 +155,11 @@ private fun ServiceProviderContent(
                     ListItem(
                         modifier = Modifier.clickable { showProviderSheet = true },
                         headlineContent = { Text(stringResource(R.string.service_provider)) },
-                        supportingContent = { Text(uiState.aiProviderConfigInfo.selectedAiProviderName) },
+                        supportingContent = {
+                            Text(
+                                uiState.selectableAiProviderModel.selectedAiProvider?.name ?: ""
+                            )
+                        },
                         trailingContent = { Icon(AiaImages.ArrowDropDown, null) },
                         leadingContent = {
                             Icon(imageVector = AiaImages.AutoAwesome, contentDescription = null)
@@ -175,9 +179,9 @@ private fun ServiceProviderContent(
                             trailingIcon = if (uiState.isShowResetHostUrl) {
                                 {
                                     TextButton(onClick = {
-                                        serviceProviderActions.onResetHostUrl(
-                                            uiState.aiProviderConfigInfo.selectedAiProviderName
-                                        )
+                                        uiState.selectableAiProviderModel.selectedAiProvider?.let {
+                                            serviceProviderActions.onResetHostUrl(it.id)
+                                        }
                                     }) {
                                         Text(text = stringResource(R.string.reset))
                                     }
@@ -216,8 +220,9 @@ private fun ServiceProviderContent(
                     }
 
                     ModelsPanel(
-                        models = uiState.aiProviderConfigInfo.selectedAiProviderInfo.models,
-                        selectedModel = uiState.aiProviderConfigInfo.selectedAiProviderInfo.selectedModel,
+                        models = uiState.selectableAiProviderModel.selectedAiProvider?.availableModels ?: emptyList(),
+                        selectedModel = uiState.selectableAiProviderModel.selectedAiProvider?.selectedModel
+                            ?: "",
                         isFetching = uiState.isModelsRefreshing,
                         onFetchModels = serviceProviderActions.onRefreshModels,
                         onAddModel = serviceProviderActions.onAddModel,
@@ -230,8 +235,7 @@ private fun ServiceProviderContent(
                 AiProviderBottomSheet(
                     show = showProviderSheet,
                     onDismissRequest = { showProviderSheet = false },
-                    providers = uiState.aiProviderConfigInfo.aiProviderInfos,
-                    currentProvider = uiState.aiProviderConfigInfo.selectedAiProviderName,
+                    selectableAiProviderModel = uiState.selectableAiProviderModel,
                     onProviderSelected = serviceProviderActions.onSetSelectedProvider,
                 )
             }
@@ -251,12 +255,14 @@ private fun ServiceProviderContent(
 
     if (showDeleteConfirmDialog)
         if (uiState is ServiceProviderUiState.Success) {
-            val name = uiState.aiProviderConfigInfo.selectedAiProviderName
+            val name = uiState.selectableAiProviderModel.selectedAiProvider?.name ?: ""
             AiaMessageConfirmAlertDialog(
                 title = stringResource(R.string.confirm_delete_title),
                 onDismissRequest = { showDeleteConfirmDialog = false },
                 onConfirmAction = {
-                    serviceProviderActions.onDeleteServiceProvider(name)
+                    uiState.selectableAiProviderModel.selectedAiProvider?.let {
+                        serviceProviderActions.onDeleteServiceProvider(it.id)
+                    }
                     showDeleteConfirmDialog = false
                 },
                 text = stringResource(
@@ -399,9 +405,8 @@ private fun ModelsPanel(
 private fun AiProviderBottomSheet(
     show: Boolean,
     onDismissRequest: () -> Unit,
-    providers: List<AiProviderInfo>,
-    currentProvider: String,
-    onProviderSelected: (String) -> Unit,
+    selectableAiProviderModel: SelectableAiProviderModel,
+    onProviderSelected: (Long) -> Unit,
 ) {
     if (show) {
         ModalBottomSheet(
@@ -409,15 +414,15 @@ private fun AiProviderBottomSheet(
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ) {
             LazyColumn {
-                items(providers) { provider ->
+                items(selectableAiProviderModel.aiProviders) { provider ->
                     ListItem(
                         modifier = Modifier.clickable {
-                            onProviderSelected(provider.name)
+                            onProviderSelected(provider.id)
                             onDismissRequest()
                         },
                         headlineContent = { Text(provider.name) },
                         trailingContent = {
-                            if (provider.name == currentProvider) {
+                            if (provider == selectableAiProviderModel.selectedAiProvider) {
                                 Icon(AiaImages.Done, null, tint = MaterialTheme.colorScheme.primary)
                             }
                         },
@@ -479,7 +484,10 @@ private fun ServiceProviderContentPreview() {
         Surface {
             ServiceProviderContent(
                 uiState = ServiceProviderUiState.Success(
-                    aiProviderConfigInfo = DEFAULT_AI_PROVIDER_CONFIG_INFO,
+                    selectableAiProviderModel = SelectableAiProviderModel(
+                        defaultAiProviders.first(),
+                        defaultAiProviders
+                    ),
                     isConfigChanged = true,
                     apiKey = "sk-abcdefg",
                     baseUrl = "https://api.openai.com/v1",

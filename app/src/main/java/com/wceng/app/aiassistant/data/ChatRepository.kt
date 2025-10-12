@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 
 interface ChatRepository {
-    fun getLatestConversations(): Flow<List<Conversation>>
+    fun getMostActiveConversations(): Flow<List<Conversation>>
     fun getConversationFlow(convId: Long): Flow<Conversation?>
     fun getConversationWithPromptFlow(convId: Long): Flow<ConversationWithPromptInfo?>
     fun getBubbleToMessages(
@@ -29,7 +29,12 @@ interface ChatRepository {
     ): Flow<List<BubbleToMessages>>
 
     fun isMessageActiveInConversation(convId: Long): Flow<Boolean>
-    suspend fun createNewConversation(title: String, promptId: Long? = null): Long
+    suspend fun createNewConversation(
+        title: String,
+        promptId: Long? = null,
+        titleSource: ConversationTitleSource = ConversationTitleSource.Default
+    ): Long
+
     suspend fun deleteConversation(id: Long)
     suspend fun deleteConversations(ids: Set<Long>)
     suspend fun getConversation(id: Long): Conversation?
@@ -58,8 +63,8 @@ class DefaultChatRepository(
     private val promptDao: PromptDao
 ) : ChatRepository {
 
-    override fun getLatestConversations(): Flow<List<Conversation>> =
-        chatDao.getLatestConversations().map {
+    override fun getMostActiveConversations(): Flow<List<Conversation>> =
+        chatDao.getConversationsByLastUpdated().map {
             it.map(ConversationEntity::asExternalModel)
         }
 
@@ -95,6 +100,8 @@ class DefaultChatRepository(
                 throw IllegalStateException("要发送消息使用的会话ID不存在")
             }
 
+            updateConversationTimestamp(convId)
+
             chatDao.continueMessage(
                 convId = convId,
                 sender = "user",
@@ -129,6 +136,8 @@ class DefaultChatRepository(
             newVersionMessageContent
         )
 
+        updateConversationTimestamp(convId)
+
         //创建ai消息占位
         val aiMessageId = chatDao.continueMessage(
             convId = convId,
@@ -144,6 +153,8 @@ class DefaultChatRepository(
         convId: Long,
         currentVersionMessageId: Long
     ) {
+        updateConversationTimestamp(convId)
+
         val aiMessageId = chatDao.branchMessage(
             convId,
             currentVersionMessageId,
@@ -155,6 +166,7 @@ class DefaultChatRepository(
     }
 
     override suspend fun toggleMessage(convId: Long, targetMessageId: Long) {
+        updateConversationTimestamp(convId)
         chatDao.changeMessageVersionWith(convId, targetMessageId)
     }
 
@@ -164,8 +176,16 @@ class DefaultChatRepository(
         chatDao.updateMessageStatus(messageEntity.id, MessageStatus.CANCELED.value)
     }
 
-    override suspend fun createNewConversation(title: String, promptId: Long?): Long {
-        return chatDao.insert(ConversationEntity(title = title, promptId = promptId))
+    override suspend fun createNewConversation(
+        title: String,
+        promptId: Long?,
+        titleSource: ConversationTitleSource
+    ): Long {
+        return chatDao.insert(
+            ConversationEntity(
+                title = title, promptId = promptId, titleSource = titleSource.value
+            )
+        )
     }
 
     override suspend fun deleteConversation(id: Long) {
@@ -184,10 +204,12 @@ class DefaultChatRepository(
         newTitle: String,
         titleSource: ConversationTitleSource
     ) {
+        updateConversationTimestamp(id)
         chatDao.updateConversationTitle(id, newTitle, titleSource.value)
     }
 
     override suspend fun clearAllBubbleAndMessages(conversationId: Long) {
+        updateConversationTimestamp(conversationId)
         chatDao.clearAllBubble(conversationId)
     }
 
@@ -236,5 +258,9 @@ class DefaultChatRepository(
                     }
                 }
             }
+    }
+
+    private suspend fun updateConversationTimestamp(conversationId: Long) {
+        chatDao.updateConversationTime(conversationId)
     }
 }
