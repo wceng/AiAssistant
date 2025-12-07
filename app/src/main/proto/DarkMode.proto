@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+option java_package = "com.wceng.app.aiassistant.data.source.datastore";
+option java_multiple_files = true;
+
+enum DarkMode {
+    DARK_MODE_UNSPECIFIED = 0;
+    LIGHT = 1;
+    DARK = 2;
+    SYSTEM = 3;
+}

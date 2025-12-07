@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+option java_package = "com.wceng.app.aiassistant.data.source.datastore";
+option java_multiple_files = true;
+
+enum ThemeScheme {
+    THEME_UNSPECIFIED = 0;
+    DEFAULT = 1;
+    DYNAMIC = 2;
+}
