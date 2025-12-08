@@ -2,6 +2,7 @@
 
 package com.wceng.app.aiassistant.ui.chat
 
+import android.net.Uri
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -131,7 +132,7 @@ fun ChatScreen(
 }
 
 data class MessageActions(
-    val onSendMessage: (String, String?) -> Unit,
+    val onSendMessage: (String, List<Uri>, String?) -> Unit,
     val onClearAllMessages: () -> Unit,
     val onCopyMessageContent: (String) -> Unit,
     val onRetrySendUserMessage: (id: Long, content: String) -> Unit,
@@ -194,8 +195,12 @@ fun ChatContent(
         },
         bottomBar = {
             MessageInput(
-                onSend = {
-                    messageActions.onSendMessage(it, chatUiState.convPrompt)
+                onSend = { text, images ->
+                    messageActions.onSendMessage(
+                        text,
+                        images,
+                        chatUiState.convPrompt
+                    )
                     clearInputFocus()
                     scrollToBottom(100)
                 },

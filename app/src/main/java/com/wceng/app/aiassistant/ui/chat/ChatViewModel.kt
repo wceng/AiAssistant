@@ -1,5 +1,6 @@
 package com.wceng.app.aiassistant.ui.chat
 
+import android.net.Uri
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -99,6 +100,7 @@ class ChatViewModel(
 
     fun sendMessage(
         content: String,
+        imageUris: List<Uri>,
         prompt: String? = null
     ) {
         convId ?: return
