@@ -29,6 +29,9 @@ data class MessageEntity constructor(
 
     val content: String,
 
+    @ColumnInfo(name = "image_url")
+    val imageUrl: String? = null,
+
     @ColumnInfo(defaultValue = "0")
     val status: Int = 0,
 

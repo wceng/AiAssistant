@@ -141,6 +141,7 @@ interface ChatDao {
         message.id AS current_version_message_id,
         message.bubble_id AS current_version_message_bubble_id,
         message.content AS current_version_message_content,
+        message.image_url AS current_version_message_image_url,
         message.timestamp AS current_version_message_timestamp,
         message.status AS current_version_message_status
     FROM bubble
@@ -163,6 +164,7 @@ interface ChatDao {
         message.id AS current_version_message_id,
         message.bubble_id AS current_version_message_bubble_id,
         message.content AS current_version_message_content,
+        message.image_url AS current_version_message_image_url,
         message.timestamp AS current_version_message_timestamp,
         message.status AS current_version_message_status
     FROM bubble
@@ -261,7 +263,8 @@ interface ChatDao {
         convId: Long,
         sender: String,
         status: Int = 0,
-        content: String
+        content: String,
+        imageUrl: String? = null,
     ): Pair<Long, Long> {
         val bubbleId = insert(BubbleEntity(conversationId = convId, sender = sender))
         val currentVersion = getCurrentMessageVersion(convId) ?: return -1L to -1L
@@ -270,6 +273,7 @@ interface ChatDao {
             MessageEntity(
                 bubbleId = bubbleId,
                 content = content,
+                imageUrl = imageUrl,
                 status = status
             )
         ).also { messageId ->

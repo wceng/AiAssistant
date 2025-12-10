@@ -1,5 +1,6 @@
 package com.wceng.app.aiassistant
 
+import com.glance.guolindev.BuildConfig
 import org.junit.Test
 
 import org.junit.Assert.*
@@ -12,6 +13,7 @@ import org.junit.Assert.*
 class ExampleUnitTest {
     @Test
     fun addition_isCorrect() {
+
         assertEquals(4, 2 + 2)
     }
 }

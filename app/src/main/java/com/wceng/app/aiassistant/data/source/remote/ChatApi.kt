@@ -1,21 +1,17 @@
 package com.wceng.app.aiassistant.data.source.remote
 
-import com.aallam.openai.api.assistant.Assistant
-import com.aallam.openai.api.assistant.AssistantRequest
-import com.aallam.openai.api.assistant.AssistantTool
-import com.wceng.app.aiassistant.data.source.remote.model.ChatFinishReason
-import com.wceng.app.aiassistant.data.source.remote.model.ChatStreamResponse
-import com.wceng.app.aiassistant.data.source.remote.model.NetworkMessage
-import com.wceng.app.aiassistant.di.OpenAiProvider
 import com.aallam.openai.api.chat.ChatCompletionRequest
 import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatRole
 import com.aallam.openai.api.chat.ContentPart
 import com.aallam.openai.api.chat.ImagePart
-import com.aallam.openai.api.chat.Tool
+import com.aallam.openai.api.chat.TextPart
 import com.aallam.openai.api.core.FinishReason
-import com.aallam.openai.api.message.attachment
 import com.aallam.openai.api.model.ModelId
+import com.wceng.app.aiassistant.data.source.remote.model.ChatFinishReason
+import com.wceng.app.aiassistant.data.source.remote.model.ChatStreamResponse
+import com.wceng.app.aiassistant.data.source.remote.model.NetworkMessage
+import com.wceng.app.aiassistant.di.OpenAiProvider
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -53,17 +49,8 @@ class OpenAIChatApi(
         }
 
         chatMessages.addAll(
-            history.map {
-                ChatMessage(
-                    role = when (it.sender) {
-                        "user" -> ChatRole.User
-                        "ai" -> ChatRole.Assistant
-                        else -> {
-                            throw IllegalArgumentException("不认识的sender")
-                        }
-                    },
-                    content = it.content
-                )
+            history.map { networkMessage ->
+                networkMessage.asOpenAIMessage()
             }
         )
 
@@ -96,6 +83,23 @@ class OpenAIChatApi(
         FinishReason.ToolCalls -> ChatFinishReason.ToolCalls
         FinishReason.ContentFilter -> ChatFinishReason.ContentFilter
         else -> ChatFinishReason.UnKnown
+    }
+
+    private fun NetworkMessage.asOpenAIMessage(): ChatMessage {
+        val contentParts = mutableListOf<ContentPart>(TextPart(this.content))
+        this.imageUrl?.let { url ->
+            contentParts.add(ImagePart(url = url))
+        }
+        return ChatMessage(
+            role = when (this.sender) {
+                "user" -> ChatRole.User
+                "ai" -> ChatRole.Assistant
+                else -> {
+                    throw IllegalArgumentException("不认识的sender")
+                }
+            },
+            content = contentParts
+        )
     }
 
     override suspend fun listModes(): Result<List<String>> =

@@ -11,4 +11,6 @@ object Constant {
     const val OPENAI_HOST_URL = "https://api.openai.com/v1/"
 
     const val DEEPSEEK_HOST_URL = "https://api.deepseek.com/v1/"
+
+    const val CHATANYWHERE_HOST_URL = "https://api.chatanywhere.tech/"
 }

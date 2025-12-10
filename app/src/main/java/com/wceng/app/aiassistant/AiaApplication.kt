@@ -7,8 +7,15 @@ import org.koin.android.ext.koin.androidLogger
 
 class AiaApplication : Application() {
 
+    companion object {
+        @JvmStatic
+        lateinit var instance: AiaApplication
+            private set
+    }
+
     override fun onCreate() {
         super.onCreate()
+        instance = this
         initKoin {
             androidLogger()
             androidContext(this@AiaApplication)

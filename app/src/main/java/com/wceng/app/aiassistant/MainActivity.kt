@@ -16,6 +16,7 @@ import androidx.core.view.ViewCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.viewbinding.BuildConfig
 import com.wceng.app.aiassistant.ui.LocalWindowWidthSize
 import com.wceng.app.aiassistant.ui.theme.AiAssistantTheme
 import com.wceng.app.aiassistant.util.currentAppLocale

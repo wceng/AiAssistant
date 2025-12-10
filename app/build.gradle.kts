@@ -12,6 +12,20 @@ plugins {
     alias(libs.plugins.auto.license)
 }
 
+// 在文件顶部或合适位置加载 local.properties
+val localProps = Properties()
+val localPropsFile = rootProject.file("local.properties")
+if (localPropsFile.exists()) {
+    localProps.load(FileInputStream(localPropsFile))
+} else {
+    logger.warn("local.properties file not found.")
+}
+
+val openaiHost = localProps.getProperty("openai.host") ?: ""
+val openaiKey = localProps.getProperty("openai.key") ?: ""
+
+
+
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("keystore.properties")
 if (keystorePropertiesFile.exists()) {
@@ -32,6 +46,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "OPENAI_HOST", "\"${openaiHost}\"")
+        buildConfigField("String", "OPENAI_KEY", "\"${openaiKey}\"")
     }
 
     signingConfigs {
@@ -67,6 +84,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     room {

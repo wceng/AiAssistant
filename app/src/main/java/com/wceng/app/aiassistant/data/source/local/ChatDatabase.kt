@@ -23,9 +23,10 @@ import com.wceng.app.aiassistant.data.source.local.model2.PromptEntity
         PromptEntity::class,
         AiProviderEntity::class
     ],
-    version = 7,
+    version = 8,
     autoMigrations = [
-        AutoMigration(from = 6, to = 7)
+        AutoMigration(from = 6, to = 7),
+        AutoMigration(from = 7, to = 8)
     ],
     exportSchema = true
 )

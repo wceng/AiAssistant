@@ -37,7 +37,11 @@ internal fun MarkDownPage(
     }
 
     Markdown(
-        markdownState = rememberMarkdownState(content, immediate = true),
+        markdownState = rememberMarkdownState(
+            content = content,
+            retainState = true,
+            immediate = true
+        ),
         animations = markdownAnimations(animateTextSize = { then(Modifier) }),
         components = markdownComponents(
             codeBlock = {

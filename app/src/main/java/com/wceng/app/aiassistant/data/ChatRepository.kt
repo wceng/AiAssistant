@@ -44,7 +44,13 @@ interface ChatRepository {
         titleSource: ConversationTitleSource
     )
 
-    suspend fun sendMessage(convId: Long, content: String, prompt: String? = null)
+    suspend fun sendMessage(
+        convId: Long,
+        content: String,
+        imageUrl: String? = null,
+        prompt: String? = null
+    )
+
     suspend fun clearAllBubbleAndMessages(conversationId: Long)
     suspend fun retrySendUserMessage(
         convId: Long,
@@ -93,6 +99,7 @@ class DefaultChatRepository(
     override suspend fun sendMessage(
         convId: Long,
         content: String,
+        imageUrl: String?,
         prompt: String?
     ) {
         runCatching {
@@ -107,6 +114,7 @@ class DefaultChatRepository(
                 sender = "user",
                 status = MessageStatus.NORMAL.value,
                 content = content,
+                imageUrl = imageUrl
             )
 
             //创建ai消息占位

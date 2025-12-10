@@ -1,6 +1,7 @@
 package com.wceng.app.aiassistant.domain.model
 
 import androidx.compose.runtime.Immutable
+import com.wceng.app.aiassistant.BuildConfig
 import com.wceng.app.aiassistant.data.source.local.model2.AiProviderEntity
 import com.wceng.app.aiassistant.util.Constant
 
@@ -51,5 +52,14 @@ val defaultAiProviders = listOf(
         selectedModel = "deepseek-chat",
         isBuiltIn = true,
         id = 2
+    ) ,
+    AiProviderInfo(
+        name = "ChatAnywhere",
+        apiKey = BuildConfig.OPENAI_KEY,
+        baseUrl = BuildConfig.OPENAI_HOST,
+        availableModels = listOf("gpt-5-mini-ca", "gpt-4o-ca"),
+        selectedModel = "gpt-5-mini-ca",
+        isBuiltIn = true,
+        id = 3
     )
 )

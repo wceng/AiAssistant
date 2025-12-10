@@ -6,12 +6,14 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.wceng.app.aiassistant.AiaApplication
 import com.wceng.app.aiassistant.data.ChatRepository
 import com.wceng.app.aiassistant.data.source.local.model2.ConversationTitleSource
 import com.wceng.app.aiassistant.domain.model.BubbleToMessages
 import com.wceng.app.aiassistant.domain.model.ConversationWithPromptInfo
 import com.wceng.app.aiassistant.ui.ChatRoute
 import com.wceng.app.aiassistant.util.Constant
+import com.wceng.app.aiassistant.util.ImageUtils
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.SharingStarted
@@ -100,12 +102,15 @@ class ChatViewModel(
 
     fun sendMessage(
         content: String,
-        imageUris: List<Uri>,
+        imageUris: List<Uri> = emptyList(),
         prompt: String? = null
     ) {
         convId ?: return
         cancelableJobMap.put(convId, viewModelScope.launch {
-            chatRepository.sendMessage(convId, content, prompt)
+            val imageUrl =  imageUris.firstOrNull()?.let {
+                ImageUtils.uriToBase64(AiaApplication.instance, it)
+            }
+            chatRepository.sendMessage(convId, content, imageUrl = imageUrl, prompt)
         })
     }
 
