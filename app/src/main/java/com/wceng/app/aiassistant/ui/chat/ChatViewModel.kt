@@ -7,7 +7,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.wceng.app.aiassistant.AiaApplication
-import com.wceng.app.aiassistant.data.ChatRepository
+import com.wceng.app.aiassistant.data.ConversationRepository
+import com.wceng.app.aiassistant.data.MessageRepository
 import com.wceng.app.aiassistant.data.source.local.model2.ConversationTitleSource
 import com.wceng.app.aiassistant.domain.model.BubbleToMessages
 import com.wceng.app.aiassistant.domain.model.ConversationWithPromptInfo
@@ -34,7 +35,8 @@ private const val SESSION_ID_KEY = "session_id_key"
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChatViewModel(
-    private val chatRepository: ChatRepository,
+    private val messageRepository: MessageRepository,
+    private val conversationRepository: ConversationRepository,
     private val savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -51,7 +53,7 @@ class ChatViewModel(
     private val _isReceiving = _currentSessionId
         .flatMapLatest { convId ->
             convId?.let {
-                chatRepository.isMessageActiveInConversation(convId)
+                messageRepository.isMessageActiveInConversation(convId)
                     .distinctUntilChanged()
                     .onEach {
                         if (it.not()) cancelableJobMap.remove(convId)
@@ -62,7 +64,7 @@ class ChatViewModel(
     private val _currentSession = _currentSessionId
         .flatMapLatest { sessionId ->
             sessionId?.let {
-                chatRepository.getConversationWithPromptFlow(it)
+                conversationRepository.getConversationWithPromptFlow(it)
             } ?: flowOf(null)
         }
 
@@ -84,7 +86,7 @@ class ChatViewModel(
     val messagesUiState: StateFlow<MessagesUiState> = _currentSessionId
         .flatMapLatest { sessionId ->
             sessionId?.let { convId ->
-                chatRepository.getBubbleToMessages(convId, false)
+                messageRepository.getBubbleToMessages(convId, false)
                     .distinctUntilChanged()
                     .map { MessagesUiState.Success(it) }
                     .onStart<MessagesUiState> { emit(MessagesUiState.Loading) }
@@ -110,7 +112,7 @@ class ChatViewModel(
             val imageUrl =  imageUris.firstOrNull()?.let {
                 ImageUtils.uriToBase64(AiaApplication.instance, it)
             }
-            chatRepository.sendMessage(convId, content, imageUrl = imageUrl, prompt)
+            messageRepository.sendMessage(convId, content, imageUrl = imageUrl, prompt)
         })
     }
 
@@ -120,7 +122,7 @@ class ChatViewModel(
     ) {
         convId ?: return
         cancelableJobMap.put(convId, viewModelScope.launch {
-            chatRepository.retrySendUserMessage(
+            messageRepository.retrySendUserMessage(
                 convId = convId,
                 currentVersionMessageId = userMessageId,
                 newVersionMessageContent = newContent
@@ -133,21 +135,21 @@ class ChatViewModel(
     ) {
         convId ?: return
         cancelableJobMap.put(convId, viewModelScope.launch {
-            chatRepository.retryResponseAssistantMessage(convId, aiMessageId)
+            messageRepository.retryResponseAssistantMessage(convId, aiMessageId)
         })
     }
 
     fun toggleMessage(targetMessageId: Long) {
         convId ?: return
         viewModelScope.launch {
-            chatRepository.toggleMessage(convId, targetMessageId)
+            messageRepository.toggleMessage(convId, targetMessageId)
         }
     }
 
     fun clearMessages() {
         convId ?: return
         viewModelScope.launch {
-            chatRepository.clearAllBubbleAndMessages(convId)
+            conversationRepository.clearAllBubbleAndMessages(convId)
         }
     }
 
@@ -156,14 +158,14 @@ class ChatViewModel(
         viewModelScope.launch {
             cancelableJobMap[convId]?.cancel()
             cancelableJobMap.remove(convId)
-            chatRepository.cancelReceiveMessage(convId)
+            messageRepository.cancelReceiveMessage(convId)
         }
     }
 
     fun renameCurrentConversationTitle(newTitle: String) {
         convId ?: return
         viewModelScope.launch {
-            chatRepository.updateConversationTitle(convId, newTitle, ConversationTitleSource.User)
+            conversationRepository.updateConversationTitle(convId, newTitle, ConversationTitleSource.User)
         }
     }
 }

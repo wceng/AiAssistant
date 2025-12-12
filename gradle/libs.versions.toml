@@ -59,6 +59,7 @@ kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime",
 openai-client-bom = { group = "com.aallam.openai", name = "openai-client-bom", version.ref = "openai-client" }
 openai-client = { group = "com.aallam.openai", name = "openai-client" }
 
+
 # Koin
 koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koin" }
 koin-androidx-compose = { group = "io.insert-koin", name = "koin-androidx-compose", version.ref = "koin" }

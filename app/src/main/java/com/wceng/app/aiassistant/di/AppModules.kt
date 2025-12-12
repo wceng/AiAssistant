@@ -3,14 +3,14 @@ package com.wceng.app.aiassistant.di
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.dataStoreFile
 import androidx.room.Room
-import androidx.room.RoomDatabase
-import androidx.sqlite.db.SupportSQLiteDatabase
 import com.wceng.app.aiassistant.MainViewModel
 import com.wceng.app.aiassistant.data.AiProviderRepository
-import com.wceng.app.aiassistant.data.ChatRepository
+import com.wceng.app.aiassistant.data.ConversationRepository
 import com.wceng.app.aiassistant.data.DefaultAiProviderRepository
-import com.wceng.app.aiassistant.data.DefaultChatRepository
+import com.wceng.app.aiassistant.data.DefaultConversationRepository
+import com.wceng.app.aiassistant.data.DefaultMessageRepository
 import com.wceng.app.aiassistant.data.DefaultUserSettingsRepository
+import com.wceng.app.aiassistant.data.MessageRepository
 import com.wceng.app.aiassistant.data.OfflineFirstPromptRepository
 import com.wceng.app.aiassistant.data.PromptRepository
 import com.wceng.app.aiassistant.data.UserSettingsRepository
@@ -90,9 +90,12 @@ val dataModule = module {
 
 val repositoryModule = module {
     singleOf(::DefaultUserSettingsRepository) { bind<UserSettingsRepository>() }
-    singleOf(::DefaultChatRepository) { bind<ChatRepository>() }
+//    singleOf(::DefaultChatRepository) { bind<ChatRepository>() }
+    singleOf(::DefaultConversationRepository) { bind<ConversationRepository>() }
+    singleOf(::DefaultMessageRepository) { bind<MessageRepository>() }
     singleOf(::OfflineFirstPromptRepository) { bind<PromptRepository>() }
     singleOf(::DefaultAiProviderRepository) { bind<AiProviderRepository>() }
+
 }
 
 val useCaseModule = module {

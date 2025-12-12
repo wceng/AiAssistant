@@ -6,7 +6,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import com.wceng.app.aiassistant.data.ChatRepository
+import com.wceng.app.aiassistant.data.ConversationRepository
 import com.wceng.app.aiassistant.domain.model.ConversationGroup
 import com.wceng.app.aiassistant.domain.usecase.CreateConversationWithPromptUseCase
 import com.wceng.app.aiassistant.domain.usecase.GetGroupedConversationsUseCase
@@ -25,7 +25,7 @@ import kotlinx.coroutines.launch
 const val SelectedConversationIdKey = "selected_conversation_id_key"
 
 class SessionViewModel(
-    private val chatRepository: ChatRepository,
+    private val conversationRepository: ConversationRepository,
     private val createConversationWithPromptUseCase: CreateConversationWithPromptUseCase,
     getGroupedConversationsUseCase: GetGroupedConversationsUseCase,
     private val savedStateHandle: SavedStateHandle,
@@ -79,7 +79,7 @@ class SessionViewModel(
     ) {
         viewModelScope.launch {
             val newConvId: Long = if (promptId == null) {
-                chatRepository.createNewConversation(title)
+                conversationRepository.createNewConversation(title)
             } else {
                 createConversationWithPromptUseCase(promptId = promptId)
             }
@@ -113,7 +113,7 @@ class SessionViewModel(
     fun deleteSelectedConversations() {
         viewModelScope.launch {
             if (selectedItems.isNotEmpty()) {
-                chatRepository.deleteConversations(selectedItems)
+                conversationRepository.deleteConversations(selectedItems)
                 disableSelectionMode()
             }
         }

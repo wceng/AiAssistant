@@ -1,7 +1,7 @@
 package com.wceng.app.aiassistant.domain.usecase
 
 import com.wceng.app.aiassistant.R
-import com.wceng.app.aiassistant.data.ChatRepository
+import com.wceng.app.aiassistant.data.ConversationRepository
 import com.wceng.app.aiassistant.domain.model.Conversation
 import com.wceng.app.aiassistant.domain.model.ConversationGroup
 import kotlinx.coroutines.flow.Flow
@@ -13,10 +13,10 @@ import kotlinx.datetime.daysUntil
 import kotlinx.datetime.toLocalDateTime
 
 class GetGroupedConversationsUseCase(
-    private val chatRepository: ChatRepository
+    private val conversationRepository: ConversationRepository
 ) {
     operator fun invoke(): Flow<List<ConversationGroup>> {
-        return chatRepository.getMostActiveConversations()
+        return conversationRepository.getMostActiveConversations()
             .map { conversations ->
                 groupConversations(conversations)
             }

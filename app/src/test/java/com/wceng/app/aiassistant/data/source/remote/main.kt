@@ -1,46 +1,18 @@
-package com.wceng.app.aiassistant
-
-import com.aallam.openai.api.chat.ChatCompletionRequest
-import com.aallam.openai.api.chat.ChatMessage
-import com.aallam.openai.api.chat.ChatRole
-import com.aallam.openai.api.chat.ToolCall
-import com.aallam.openai.api.chat.ToolChoice
-import com.aallam.openai.api.chat.chatCompletionRequest
-import com.aallam.openai.api.chat.chatMessage
+package com.wceng.app.aiassistant.data.source.remote
+import com.aallam.openai.api.chat.*
 import com.aallam.openai.api.model.ModelId
 import com.aallam.openai.client.OpenAI
 import com.aallam.openai.client.OpenAIHost
-import com.glance.guolindev.BuildConfig
-import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.add
-import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.json.put
-import kotlinx.serialization.json.putJsonArray
-import kotlinx.serialization.json.putJsonObject
-import org.junit.Test
-
-import org.junit.Assert.*
-import kotlin.collections.orEmpty
+import com.wceng.app.aiassistant.BuildConfig
+import kotlinx.serialization.json.*
 
 /**
- * Example local unit test, which will execute on the development machine (host).
- *
- * See [testing documentation](http://d.android.com/tools/testing).
+ * This code snippet demonstrates the use of OpenAI's chat completion capabilities
+ * with a focus on integrating function calls into the chat conversation.
  */
-class ExampleUnitTest {
-    @Test
-    fun addition_isCorrect() {
-        runBlocking {
-            main()
-        }
-    }
-}
-
-
 suspend fun main() {
-    val token = com.wceng.app.aiassistant.BuildConfig.OPENAI_KEY
-    val openAI = OpenAI(token, host = OpenAIHost(baseUrl = com.wceng.app.aiassistant.BuildConfig.OPENAI_HOST))
+    val token = BuildConfig.OPENAI_KEY
+    val openAI = OpenAI(token, host = OpenAIHost(baseUrl = BuildConfig.OPENAI_HOST))
 
     println("\n> Create Chat Completion function call...")
     val modelId = ModelId("gpt-3.5-turbo-ca")

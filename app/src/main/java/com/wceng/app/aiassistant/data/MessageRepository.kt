@@ -2,56 +2,34 @@ package com.wceng.app.aiassistant.data
 
 import com.wceng.app.aiassistant.data.source.local.dao2.ChatDao
 import com.wceng.app.aiassistant.data.source.local.dao2.PromptDao
-import com.wceng.app.aiassistant.data.source.local.model2.ConversationEntity
 import com.wceng.app.aiassistant.data.source.local.model2.ConversationTitleSource
 import com.wceng.app.aiassistant.data.source.remote.ChatApi
 import com.wceng.app.aiassistant.data.source.remote.model.ChatFinishReason
 import com.wceng.app.aiassistant.data.source.remote.model.asNetwork
 import com.wceng.app.aiassistant.domain.model.BubbleToMessages
-import com.wceng.app.aiassistant.domain.model.Conversation
-import com.wceng.app.aiassistant.domain.model.ConversationWithPromptInfo
 import com.wceng.app.aiassistant.domain.model.MessageStatus
 import com.wceng.app.aiassistant.domain.model.asBubbleToMessages
-import com.wceng.app.aiassistant.domain.model.asConversationWithPromptInfo
-import com.wceng.app.aiassistant.domain.model.asExternalModel
 import com.wceng.app.aiassistant.util.Constant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 
-interface ChatRepository {
-    fun getMostActiveConversations(): Flow<List<Conversation>>
-    fun getConversationFlow(convId: Long): Flow<Conversation?>
-    fun getConversationWithPromptFlow(convId: Long): Flow<ConversationWithPromptInfo?>
+interface MessageRepository {
     fun getBubbleToMessages(
         convId: Long,
         isDescending: Boolean = false
     ): Flow<List<BubbleToMessages>>
 
     fun isMessageActiveInConversation(convId: Long): Flow<Boolean>
-    suspend fun createNewConversation(
-        title: String,
-        promptId: Long? = null,
-        titleSource: ConversationTitleSource = ConversationTitleSource.Default
-    ): Long
-
-    suspend fun deleteConversation(id: Long)
-    suspend fun deleteConversations(ids: Set<Long>)
-    suspend fun getConversation(id: Long): Conversation?
-    suspend fun updateConversationTitle(
-        id: Long,
-        newTitle: String,
-        titleSource: ConversationTitleSource
-    )
 
     suspend fun sendMessage(
         convId: Long,
         content: String,
         imageUrl: String? = null,
-        prompt: String? = null
+        prompt: String? = null,
+        enableWebSearch: Boolean = false
     )
 
-    suspend fun clearAllBubbleAndMessages(conversationId: Long)
     suspend fun retrySendUserMessage(
         convId: Long,
         currentVersionMessageId: Long,
@@ -59,20 +37,17 @@ interface ChatRepository {
     )
 
     suspend fun retryResponseAssistantMessage(convId: Long, currentVersionMessageId: Long)
+
     suspend fun toggleMessage(convId: Long, targetMessageId: Long)
+
     suspend fun cancelReceiveMessage(convId: Long)
 }
 
-class DefaultChatRepository(
+class DefaultMessageRepository(
     private val remote: ChatApi,
     private val chatDao: ChatDao,
     private val promptDao: PromptDao
-) : ChatRepository {
-
-    override fun getMostActiveConversations(): Flow<List<Conversation>> =
-        chatDao.getConversationsByLastUpdated().map {
-            it.map(ConversationEntity::asExternalModel)
-        }
+) : MessageRepository {
 
     override fun getBubbleToMessages(
         convId: Long,
@@ -86,21 +61,12 @@ class DefaultChatRepository(
         return chatDao.isMessageActiveInConversation(convId)
     }
 
-    override fun getConversationFlow(convId: Long): Flow<Conversation?> {
-        return chatDao.getConversationFlowById(convId)
-            .map { it?.let(ConversationEntity::asExternalModel) }
-    }
-
-    override fun getConversationWithPromptFlow(convId: Long): Flow<ConversationWithPromptInfo?> {
-        return chatDao.getConversationWithPromptFlow(convId)
-            .map { it?.asConversationWithPromptInfo() }
-    }
-
     override suspend fun sendMessage(
         convId: Long,
         content: String,
         imageUrl: String?,
-        prompt: String?
+        prompt: String?,
+        enableWebSearch: Boolean
     ) {
         runCatching {
             if (!chatDao.existConversation(convId)) {
@@ -182,43 +148,6 @@ class DefaultChatRepository(
         val messageEntity = chatDao.getActiveMessageInConversation(convId)
         messageEntity ?: return
         chatDao.updateMessageStatus(messageEntity.id, MessageStatus.CANCELED.value)
-    }
-
-    override suspend fun createNewConversation(
-        title: String,
-        promptId: Long?,
-        titleSource: ConversationTitleSource
-    ): Long {
-        return chatDao.insert(
-            ConversationEntity(
-                title = title, promptId = promptId, titleSource = titleSource.value
-            )
-        )
-    }
-
-    override suspend fun deleteConversation(id: Long) {
-        chatDao.deleteConversation(id)
-    }
-
-    override suspend fun deleteConversations(ids: Set<Long>) {
-        chatDao.deleteConversations(ids)
-    }
-
-    override suspend fun getConversation(id: Long): Conversation? =
-        chatDao.getConversationById(id)?.asExternalModel()
-
-    override suspend fun updateConversationTitle(
-        id: Long,
-        newTitle: String,
-        titleSource: ConversationTitleSource
-    ) {
-        updateConversationTimestamp(id)
-        chatDao.updateConversationTitle(id, newTitle, titleSource.value)
-    }
-
-    override suspend fun clearAllBubbleAndMessages(conversationId: Long) {
-        updateConversationTimestamp(conversationId)
-        chatDao.clearAllBubble(conversationId)
     }
 
     private suspend fun executeSendMessageRequest(convId: Long, responseMessageId: Long) {
